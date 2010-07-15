@@ -23,16 +23,23 @@ public:
 	* \xbind
 	* \brief 文字列strをストリームに流す
 	*/
-	void put_s(const StringPtr& str);
+	void put_s(const StringPtr& str){
+		put_s(str->data(), str->data_size());
+	}
+
 	/**
 	* \brief 文字列strをストリームに流す
 	*/
-	void put_s(const char_t* str);
+	void put_s(const char_t* str){
+		put_s(str, string_data_size(str));
+	}
 	
 	/**
 	* \brief 文字列strをストリームに流す
 	*/
-	void put_s(const char_t* str, const char_t* end);
+	void put_s(const char_t* str, const char_t* end){
+		put_s(str, end-str);
+	}
 
 	/*
 	* \brief 文字列strをストリームに流す
@@ -50,7 +57,9 @@ public:
 	/**
 	* \brief 文字列strをストリームに流す
 	*/
-	void put_s(const LongLivedString& str);
+	void put_s(const LongLivedString& str){
+		put_s(str.str(), str.size());
+	}
 
 	/**
 	* \brief 文字列strをストリームに流す
@@ -84,6 +93,12 @@ public:
 	* \brief valueを文字列化し、改行を加えてプリントする
 	*/
 	void println(const AnyPtr& value);
+
+	/**
+	* \xbind
+	* \brief 
+	*/
+	void printf(const StringPtr& format_string, const ArgumentsPtr& args);
 
 	/**
 	* \xbind
@@ -558,7 +573,7 @@ public:
 	
 	MemoryStream(const void* data, uint_t data_size);
 
-	~MemoryStream();
+	virtual ~MemoryStream();
 	
 	virtual uint_t write(const void* p, uint_t size);
 
@@ -607,7 +622,7 @@ public:
 
 	CompressEncoder(const StreamPtr& stream);
 
-	~CompressEncoder();
+	virtual ~CompressEncoder();
 
 	virtual uint_t write(const void* p, uint_t size);
 
@@ -626,7 +641,7 @@ public:
 
 	CompressDecoder(const StreamPtr& stream);
 
-	~CompressDecoder();
+	virtual ~CompressDecoder();
 
 	virtual uint_t read(void* p, uint_t size);
 
@@ -736,7 +751,7 @@ public:
 		impl_ = std_stream_lib()->new_stdin_stream();
 	}
 
-	~StdinStream(){
+	virtual ~StdinStream(){
 		std_stream_lib()->delete_stdin_stream(impl_);
 	}
 
@@ -744,7 +759,7 @@ public:
 		return std_stream_lib()->read_stdin_stream(impl_, p, size);
 	}
 
-	virtual uint_t read_charactors(AnyPtr* buffer, uint_t max){
+	virtual uint_t read_charactors(AnyPtr* buffer, uint_t){
 		return Stream::read_charactors(buffer, 1);
 	}
 
@@ -758,7 +773,7 @@ public:
 		impl_ = std_stream_lib()->new_stdout_stream();
 	}
 
-	~StdoutStream(){
+	virtual ~StdoutStream(){
 		std_stream_lib()->delete_stdout_stream(impl_);
 	}
 
@@ -775,7 +790,7 @@ public:
 		impl_ = std_stream_lib()->new_stderr_stream();
 	}
 
-	~StderrStream(){
+	virtual ~StderrStream(){
 		std_stream_lib()->delete_stderr_stream(impl_);
 	}
 
@@ -788,7 +803,7 @@ private:
 
 
 template<>
-struct XNew<MemoryStream> : XXNew<MemoryStream>{
+struct XNew<MemoryStream> : public XXNew<MemoryStream>{
 	XNew();
 	XNew(const void* data, uint_t data_size);
 };

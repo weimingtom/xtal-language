@@ -22,6 +22,13 @@ public:
 	}
 	
 	void lock(){
+		/*for(int i=0; i<1000; ++i){
+			if(TryEnterCriticalSection(&sect_)){
+				return;
+			}
+			Sleep(1);
+		}*/
+
 		EnterCriticalSection(&sect_);
 	}
 	

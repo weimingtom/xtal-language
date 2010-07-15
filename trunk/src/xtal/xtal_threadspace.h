@@ -9,8 +9,6 @@
 
 namespace xtal{
 
-void set_vmachine(const VMachinePtr& vm);
-
 class ThreadSpace{
 public:
 	
@@ -18,7 +16,6 @@ public:
 
 	void initialize(ThreadLib* lib){
 		thread_lib_ = lib;
-		environment_ = environment();
 
 		thread_enabled_ = false;
 		registered_thread_ = false;
@@ -27,8 +24,6 @@ public:
 		mutex_ = XNew<Mutex>(); 
 
 		thread_enabled_ = true;
-
-		temp_ = XNew<VMachine>();
 
 		register_vmachine();
 		xlock();
@@ -43,7 +38,6 @@ public:
 		thread_enabled_ = false;
 		thread_lib_ = 0;
 		mutex_ = null;
-		temp_ = null;
 	}
 
 	void join_all_threads(){
@@ -55,11 +49,11 @@ public:
 	}
 
 	void register_vmachine(){
-		set_vmachine(xnew<VMachine>());
+		set_vmachine(vmachine_take_over());
 	}
 
 	void unregister_vmachine(){
-		set_vmachine(nul<VMachine>());
+		vmachine_take_back(set_vmachine(nul<VMachine>()));
 	}
 
 	void xlock(){
@@ -78,24 +72,18 @@ public:
 		mutex_->unlock();
 	}
 
-	void swap_temp(){
-		VMachinePtr temp = vmachine_checked();
-		set_vmachine(temp_);
-		temp_ = temp;
-	}
-
-	void register_thread(){
+	void register_thread(Environment* environment){
+		// まずロックを獲得する
 		thread_lib_->lock_mutex(mutex_->impl());
 
-		XTAL_ASSERT(environment()==0);
-		set_environment(environment_);
+		set_environment(environment); // 環境へのポインタをスレッドローカル変数にコピーする
 
 		registered_thread_ = true;
 		thread_count_++;
 		register_vmachine();
 	}
 
-	void unregister_thread(){
+	void unregister_thread(Environment* environment){
 		unregister_vmachine();
 		thread_count_--;
 		xunlock();
@@ -122,9 +110,6 @@ public:
 	}
 
 private:
-
-	VMachinePtr temp_;
-
 	int thread_count_;
 
 	MutexPtr mutex_;
@@ -133,7 +118,6 @@ private:
 	bool registered_thread_;
 
 	ThreadLib* thread_lib_;
-	Environment* environment_;
 };
 
 }

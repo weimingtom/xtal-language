@@ -73,7 +73,7 @@ private:
 
 		TARRAY, 
 		TMAP,
-		TVALUES,
+		TVALUES
 	};
 
 private:

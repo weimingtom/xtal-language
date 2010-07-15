@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <cstddef>
+
 /**
 * @brief xtal namespace
 */
@@ -58,7 +60,19 @@ enum{
 #define XTAL_UNLIKELY(x) x
 #endif
 
-#if !defined(XTAL_NO_THREAD) && !defined(XTAL_TLS_PTR) && defined(XTAL_USE_PTHREAD_TLS)
+///////////////////////////////////////////////
+// Thread
+
+#ifndef XTAL_NO_THREAD
+
+#if defined(_MSC_VER)
+
+// VCにおけるXTAL_TLS_PTRの実装
+#define XTAL_TLS_PTR(x) __declspec(thread) x*
+
+#elif defined(XTAL_USE_PTHREAD_TLS)
+
+// pthreadを使ったXTAL_TLS_PTRの実装
 #include <pthread.h>
 template<class T>
 struct TLSPtr{
@@ -73,9 +87,15 @@ private:
 	void operator=(const TLSPtr&);
 };
 #define XTAL_TLS_PTR(x) TLSPtr<x>
-#endif
 
-#if !defined(XTAL_NO_THREAD) && !defined(XTAL_TLS_PTR) && defined(_WIN32) && !defined(_MSC_VER)
+#elif defined(__GNUC__) && !defined(__CYGWIN__)
+			
+// gccにおけるXTAL_TLS_PTRの実装
+#define XTAL_TLS_PTR(x) __thread x*
+
+#elif defined(_WIN32)
+
+// win32 apiを使ったXTAL_TLS_PTRの実装
 #include <windows.h>
 template<class T>
 struct TLSPtr{
@@ -90,7 +110,21 @@ private:
 	void operator=(const TLSPtr&);
 };
 #define XTAL_TLS_PTR(x) TLSPtr<x>
+
+#else
+
+#error // XTAL_NO_THREADを定義しない場合、TLSを実現するためのXTAL_TLS_PTR(x)の実装が必要
+
 #endif
+
+#else
+
+// スレッドを使わない場合、単なるポインタ型にする
+#define XTAL_TLS_PTR(x) x*
+
+#endif
+
+/////////////////////////////////////////////////////
 
 #ifdef XTAL_NO_PARSER
 #	define XTAL_USE_COMPILED_EMB
@@ -103,7 +137,7 @@ private:
 #if defined(XTAL_DEBUG) && !defined(XTAL_NO_ASSERT)
 #	define XTAL_ASSERT(expr) assert(expr)
 #else
-#	define XTAL_ASSERT(expr)
+#	define XTAL_ASSERT(expr) (void)0
 #endif
 
 #ifdef XTAL_DEBUG
@@ -135,12 +169,6 @@ private:
 #define XTAL_CASE2(key, key2) XTAL_CASE1(key) case key2:
 #define XTAL_CASE3(key, key2, key3) XTAL_CASE2(key, key2) case key3:
 #define XTAL_CASE4(key, key2, key3, key4) XTAL_CASE3(key, key2, key3) case key4:
-
-#ifdef XTAL_NO_THREAD
-#	define XTAL_UNLOCK 
-#else
-#	define XTAL_UNLOCK if(const ::xtal::XUnlock& xunlock = (XTAL_UNUSED_VAR(xunlock), 0))
-#endif
 
 #ifdef __GNUC__
 #	define XTAL_NOINLINE __attribute__((noinline)) 
@@ -182,20 +210,6 @@ private:
 #		define XTAL_SPRINTF(buffer, data_size, format, value) sprintf_s(buffer, data_size, format, value)
 #	else
 #		define XTAL_SPRINTF(buffer, data_size, format, value) std::sprintf(buffer, format, value)
-#	endif
-#endif
-
-#ifdef XTAL_NO_THREAD
-#	define XTAL_TLS_PTR(x) x*
-#else
-#	ifndef XTAL_TLS_PTR
-#		if defined(_MSC_VER)
-#			define XTAL_TLS_PTR(x) __declspec(thread) x*
-#		elif defined(__GNUC__) && !defined(__CYGWIN__)
-#			define XTAL_TLS_PTR(x) __thread x*
-#		else 
-#			error // XTAL_NO_THREADを定義しない場合、TLSを実現するためのXTAL_TLS_PTR(x)の実装が必要
-#		endif
 #	endif
 #endif
 
@@ -419,8 +433,8 @@ typedef SelectType<sizeof(void*)>::uint_t uptr_t;
 /// byte
 typedef SelectType<1>::uint_t byte_t;
 
-//using std::size_t size_t;
-//using std::ptrdiff_t ptrdiff_t;
+using std::size_t;
+using std::ptrdiff_t;
 
 #ifdef XTAL_USE_WCHAR
 
@@ -720,17 +734,17 @@ struct InheritedN{
 	};
 };
 
-template<class T> struct InheritedN<T&> : InheritedN<T>{};
-template<class T> struct InheritedN<T*> : InheritedN<T>{};
-template<class T> struct InheritedN<const T> : InheritedN<T>{};
-template<class T> struct InheritedN<volatile T> : InheritedN<T>{};
+template<class T> struct InheritedN<T&> : public InheritedN<T>{};
+template<class T> struct InheritedN<T*> : public InheritedN<T>{};
+template<class T> struct InheritedN<const T> : public InheritedN<T>{};
+template<class T> struct InheritedN<volatile T> : public InheritedN<T>{};
 
 
 template<class T, int N = -1>
 struct InheritedCast;
 
 template<class T>
-struct InheritedCast<T, -1> : InheritedCast<T, InheritedN<T>::value>{};
+struct InheritedCast<T, -1> : public InheritedCast<T, InheritedN<T>::value>{};
 
 template<class T>
 struct InheritedCast<T, INHERITED_RCBASE>{
@@ -777,7 +791,7 @@ struct LongLivedString{
 };
 
 template<int N>
-struct LongLivedStringN : LongLivedString{
+struct LongLivedStringN : public LongLivedString{
 	uint_t size() const{ return N; }	
 };
 
@@ -813,7 +827,7 @@ enum PrimitiveType{
 	TYPE_INTERNED_STRING,
 	// ここから上はimmutableな値型である
 
-	TYPE_PRIMITIVE_TYPE_MAX,
+	TYPE_PRIMITIVE_TYPE_MAX
 };
 
 enum PrimitiveTypeRef{
@@ -845,6 +859,9 @@ enum PrimitiveTypeRef{
 	TYPE_MASK = (1<<TYPE_SHIFT)-1
 };
 
+enum{
+	SMALL_STRING_MAX = sizeof(void*) / sizeof(char_t)
+};
 
 /**
 * \brief ブロックの種類

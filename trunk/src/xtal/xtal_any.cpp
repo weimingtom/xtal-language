@@ -29,8 +29,8 @@ AnyPtr Any::call() const{
 const AnyPtr& Any::member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility) const{
 	accessibility = 0;
 
-	if(type(*this)==TYPE_BASE){
-		Base* p = pvalue(*this);
+	if(XTAL_detail_type(*this)==TYPE_BASE){
+		Base* p = XTAL_detail_pvalue(*this);
 		const AnyPtr& ret = inherited_too ?
 			environment_->member_cache_table_.cache(p, primary_key, secondary_key, accessibility) :
 			p->rawmember(primary_key, secondary_key, false, accessibility, Temp());
@@ -40,8 +40,8 @@ const AnyPtr& Any::member(const IDPtr& primary_key, const AnyPtr& secondary_key,
 }
 
 void Any::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility) const{
-	if(type(*this)>=TYPE_BASE){
-		rcpvalue(*this)->def(primary_key, value, secondary_key, accessibility); 
+	if(XTAL_detail_type(*this)>=TYPE_BASE){
+		XTAL_detail_rcpvalue(*this)->def(primary_key, value, secondary_key, accessibility); 
 	}
 }
 
@@ -50,7 +50,7 @@ void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr&
 	Any mem = cls->member(primary_key, secondary_key, inherited_too);
 	vm->set_arg_this(ap(*this));
 
-	if(is_undefined(mem)){
+	if(XTAL_detail_is_undefined(mem)){
 		if(!q){
 			set_unsupported_error(cls, primary_key, secondary_key, vm);
 		}
@@ -73,13 +73,13 @@ void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr&
 }
 
 void Any::rawcall(const VMachinePtr& vm) const{
-	switch(type(*this)){
+	switch(XTAL_detail_type(*this)){
 		XTAL_DEFAULT{
-			rawsend(vm, id_op_list()[IDOp::id_op_call]);
+			rawsend(vm, XTAL_DEFINED_ID(op_call));
 		}
 
 		XTAL_CASE(TYPE_BASE){ 
-			pvalue(*this)->rawcall(vm);
+			XTAL_detail_pvalue(*this)->rawcall(vm);
 		}
 
 		XTAL_CASE(TYPE_IVAR_GETTER){ unchecked_ptr_cast<InstanceVariableGetter>(ap(*this))->on_rawcall(vm); }
@@ -93,12 +93,12 @@ void Any::rawcall(const VMachinePtr& vm) const{
 		XTAL_CASE(TYPE_FIBER){ unchecked_ptr_cast<Fiber>(ap(*this))->on_rawcall(vm); }
 	}
 
-	if(vm->processed()==0){
+	if(vm->is_executed()==0){
 		if(vm->except()){ 
 			return;
 		}
 
-		set_unsupported_error(ap(*this)->get_class(), id_op_list()[IDOp::id_op_call], undefined, vm);
+		set_unsupported_error(ap(*this)->get_class(), XTAL_DEFINED_ID(op_call), undefined, vm);
 		return;
 	}
 }
@@ -110,42 +110,42 @@ void Any::init(RefCountingBase* p){
 }
 
 int_t Any::to_i() const{
-	switch(type(*this)){
-		XTAL_DEFAULT{ return cast<int_t>((*this).send(Xid(to_i))); }
+	switch(XTAL_detail_type(*this)){
+		XTAL_DEFAULT{ return cast<int_t>((*this).send(XTAL_DEFINED_ID(to_i))); }
 		XTAL_CASE(TYPE_NULL){ return 0; }
-		XTAL_CASE(TYPE_INT){ return ivalue(*this); }
-		XTAL_CASE(TYPE_FLOAT){ return (int_t)fvalue(*this); }
+		XTAL_CASE(TYPE_INT){ return XTAL_detail_ivalue(*this); }
+		XTAL_CASE(TYPE_FLOAT){ return (int_t)XTAL_detail_fvalue(*this); }
 	}
 //	return 0;
 }
 
 float_t Any::to_f() const{
-	switch(type(*this)){
-		XTAL_DEFAULT{ return cast<float_t>((*this).send(Xid(to_f))); }
+	switch(XTAL_detail_type(*this)){
+		XTAL_DEFAULT{ return cast<float_t>((*this).send(XTAL_DEFINED_ID(to_f))); }
 		XTAL_CASE(TYPE_NULL){ return 0; }
-		XTAL_CASE(TYPE_INT){ return (float_t)ivalue(*this); }
-		XTAL_CASE(TYPE_FLOAT){ return fvalue(*this); }
+		XTAL_CASE(TYPE_INT){ return (float_t)XTAL_detail_ivalue(*this); }
+		XTAL_CASE(TYPE_FLOAT){ return XTAL_detail_fvalue(*this); }
 	}
 //	return 0;
 }
 
 StringPtr Any::to_s() const{
-	switch(type(*this)){
+	switch(XTAL_detail_type(*this)){
 		XTAL_DEFAULT{
-			return ptr_cast<String>((*this).send(Xid(to_s)));
+			return ptr_cast<String>((*this).send(XTAL_DEFINED_ID(to_s)));
 		}
 
-		XTAL_CASE(TYPE_NULL){ return Xid(null); }
-		XTAL_CASE(TYPE_UNDEFINED){ return Xid(undefined); }
+		XTAL_CASE(TYPE_NULL){ return XTAL_DEFINED_ID(null); }
+		XTAL_CASE(TYPE_UNDEFINED){ return XTAL_DEFINED_ID(undefined); }
 
 		XTAL_CASE(TYPE_BASE){ 
-			return ptr_cast<String>((*this).send(Xid(to_s)));
+			return ptr_cast<String>((*this).send(XTAL_DEFINED_ID(to_s)));
 		}
 
 		XTAL_CASE(TYPE_INT){ return Xf1("%d", 0, ap(*this)); }
 		XTAL_CASE(TYPE_FLOAT){ return Xf1("%g", 0, ap(*this)); }
-		XTAL_CASE(TYPE_FALSE){ return Xid(false); }
-		XTAL_CASE(TYPE_TRUE){ return Xid(true); }
+		XTAL_CASE(TYPE_FALSE){ return XTAL_DEFINED_ID(false); }
+		XTAL_CASE(TYPE_TRUE){ return XTAL_DEFINED_ID(true); }
 
 		XTAL_CASE4(TYPE_SMALL_STRING, TYPE_LONG_LIVED_STRING, TYPE_INTERNED_STRING, TYPE_STRING){
 			return unchecked_ptr_cast<String>(ap(*this));
@@ -159,7 +159,7 @@ ArrayPtr Any::to_a() const{
 		return ret;	
 	}
 	
-	return ptr_cast<Array>((*this).send(Xid(op_to_array)));
+	return ptr_cast<Array>((*this).send(XTAL_DEFINED_ID(op_to_array)));
 }
 
 MapPtr Any::to_m() const{
@@ -167,15 +167,15 @@ MapPtr Any::to_m() const{
 		return ret;	
 	}
 	
-	return ptr_cast<Map>((*this).send(Xid(op_to_map)));
+	return ptr_cast<Map>((*this).send(XTAL_DEFINED_ID(op_to_map)));
 }
 
 const ClassPtr& Any::object_parent() const{
-	switch(type(*this)){
+	switch(XTAL_detail_type(*this)){
 		XTAL_DEFAULT{ return nul<Class>(); }
 
 		XTAL_CASE(TYPE_BASE){ 
-			return pvalue(*this)->object_parent(); 
+			return XTAL_detail_pvalue(*this)->object_parent(); 
 		}
 
 		XTAL_CASE(TYPE_NATIVE_METHOD){ return unchecked_ptr_cast<NativeMethod>(ap(*this))->object_parent();  }
@@ -187,8 +187,8 @@ const ClassPtr& Any::object_parent() const{
 }
 
 void Any::set_object_parent(const ClassPtr& parent) const{
-	if(type(*this)>=TYPE_BASE){
-		rcpvalue(*this)->set_object_parent(parent);
+	if(XTAL_detail_type(*this)>=TYPE_BASE){
+		XTAL_detail_rcpvalue(*this)->set_object_parent(parent);
 	}
 }
 
@@ -227,7 +227,7 @@ StringPtr Any::defined_place_name(const CodePtr& code, int_t pc, int_t name_numb
 StringPtr Any::ask_object_name_to_parent() const{
 	if(const ClassPtr& parent = object_parent()){
 		if(ValuesPtr myname = parent->child_object_name(ap(*this))){
-			if(is_undefined(myname->at(1))){
+			if(XTAL_detail_is_undefined(myname->at(1))){
 				return Xf2("%s::%s", 0, parent->object_name(), 1, myname->at(0));
 			}
 			else{
@@ -242,14 +242,14 @@ StringPtr Any::ask_object_name_to_parent() const{
 StringPtr Any::object_name() const{
 	StringPtr ret;
 
-	switch(type(*this)){
+	switch(XTAL_detail_type(*this)){
 		XTAL_DEFAULT;
-		XTAL_CASE(TYPE_NULL){ ret = Xid(null); }
-		XTAL_CASE(TYPE_UNDEFINED){ ret = Xid(undefined); }
+		XTAL_CASE(TYPE_NULL){ ret = XTAL_DEFINED_ID(null); }
+		XTAL_CASE(TYPE_UNDEFINED){ ret = XTAL_DEFINED_ID(undefined); }
 		XTAL_CASE(TYPE_INT){ ret = Xf1("%d", 0, ap(*this)); }
 		XTAL_CASE(TYPE_FLOAT){ ret = Xf1("%g", 0, ap(*this)); }
-		XTAL_CASE(TYPE_FALSE){ ret = Xid(true); }
-		XTAL_CASE(TYPE_TRUE){ ret = Xid(false); }
+		XTAL_CASE(TYPE_FALSE){ ret = XTAL_DEFINED_ID(true); }
+		XTAL_CASE(TYPE_TRUE){ ret = XTAL_DEFINED_ID(false); }
 
 		XTAL_CASE4(TYPE_SMALL_STRING, TYPE_LONG_LIVED_STRING, TYPE_INTERNED_STRING, TYPE_STRING){ 
 			ret = unchecked_ptr_cast<String>(ap(*this)); 
@@ -284,7 +284,7 @@ StringPtr Any::object_name() const{
 }
 
 bool Any::is_inherited(const AnyPtr& klass) const{
-	if(raweq(*this, klass)) return true;
+	if(XTAL_detail_raweq(*this, klass)) return true;
 
 	if(const ClassPtr& cls = ptr_cast<Class>(ap(*this))){
 		return cls->is_inherited(klass);
@@ -295,11 +295,11 @@ bool Any::is_inherited(const AnyPtr& klass) const{
 }
 
 bool Any::op_eq( const AnyPtr& v) const{
-  return raweq(*this, *v); 
+  return XTAL_detail_raweq(*this, *v); 
 } 
 
 const AnyPtr& Any::p() const{
-	ap(*this)->send(Xid(p));
+	ap(*this)->send(XTAL_DEFINED_ID(p));
 	return ap(*this);
 }
 
@@ -311,7 +311,7 @@ MapPtr Any::s_save() const{
 	ary->push_back(klass);
 
 	Xfor(it, ary){
-		if(const AnyPtr& member = it->member(Xid(serial_save), undefined, false)){
+		if(const AnyPtr& member = it->member(XTAL_DEFINED_ID(serial_save), undefined, false)){
 			const VMachinePtr& vm = setup_call(1);
 			vm->set_arg_this(ap(*this));
 			member->rawcall(vm);
@@ -332,8 +332,8 @@ void Any::s_load(const MapPtr& ret) const{
 	ary->push_back(klass);
 
 	Xfor(it, ary){
-		if(rawne(it, cpp_class<Any>())){
-			if(const AnyPtr& member = it->member(Xid(serial_load), undefined, false)){
+		if(!XTAL_detail_raweq(it, cpp_class<Any>())){
+			if(const AnyPtr& member = it->member(XTAL_DEFINED_ID(serial_load), undefined, false)){
 				const VMachinePtr& vm = setup_call(1);
 				vm->push_arg(ret->at(it));
 				vm->set_arg_this(ap(*this));
@@ -348,11 +348,11 @@ void Any::s_load(const MapPtr& ret) const{
 }
 
 AnyPtr Any::save_instance_variables(const ClassPtr& p) const{
-	if(type(*this)!=TYPE_BASE){
+	if(XTAL_detail_type(*this)!=TYPE_BASE){
 		return undefined;
 	}
 
-	if(InstanceVariables* iv = pvalue(*this)->instance_variables()){
+	if(InstanceVariables* iv = XTAL_detail_pvalue(*this)->instance_variables()){
 		if(const CodePtr& code = p->code()){
 			ClassInfo* info = p->info();
 			if(info->instance_variable_size!=0){	
@@ -368,11 +368,11 @@ AnyPtr Any::save_instance_variables(const ClassPtr& p) const{
 }
 
 void Any::load_instance_variables(const ClassPtr& p, const AnyPtr& v) const{
-	if(type(*this)!=TYPE_BASE){
+	if(XTAL_detail_type(*this)!=TYPE_BASE){
 		return;
 	}
 
-	if(InstanceVariables* iv = pvalue(*this)->instance_variables()){
+	if(InstanceVariables* iv = XTAL_detail_pvalue(*this)->instance_variables()){
 		if(const MapPtr& insts = ptr_cast<Map>(v)){
 			if(const CodePtr& code = p->code()){
 				ClassInfo* info = p->info();

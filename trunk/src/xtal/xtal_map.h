@@ -209,11 +209,11 @@ public:
 
 	struct Fun{
 		static uint_t hash(const AnyPtr& key){
-			return (rawvalue(key).u() ^ type(key) ^ (rawvalue(key).u()>>3));
+			return XTAL_detail_rawhash(key);
 		}
 
 		static bool eq(const AnyPtr& a, const AnyPtr& b){
-			return raweq(a, b);
+			return XTAL_detail_raweq(a, b);
 		}
 	};
 
@@ -283,7 +283,7 @@ public:
 
 
 template<>
-struct XNew<Map> : XXNew<Map>{
+struct XNew<Map> : public XXNew<Map>{
 	XNew();
 };
 

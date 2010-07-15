@@ -212,7 +212,7 @@ Lambda::Lambda(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, Fun
 
 void Lambda::on_rawcall(const VMachinePtr& vm){
 	vm->set_arg_this(this_);
-	vm->mv_carry_over(this);
+	vm->carry_over(this, true);
 }
 
 Fiber::Fiber(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunInfo* info)

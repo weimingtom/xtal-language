@@ -301,18 +301,26 @@ Val& OrderedHashtable<Key, Val, Fun>::operator [](const Key& key){
 
 template<class Key, class Val, class Fun>
 std::pair<typename OrderedHashtable<Key, Val, Fun>::iterator, bool> OrderedHashtable<Key, Val, Fun>::insert(const Key& key, const Val& value, uint_t hash){
-	Node** p = &begin_[calc_index(hash)];
-	while(*p){
-		if(Fun::eq((*p)->pair.first, key)){
-			(*p)->pair.second = value;
-			return std::pair<iterator, bool>(*p, false);
+	Node* p = begin_[calc_index(hash)];
+	while(p){
+		if(Fun::eq(p->pair.first, key)){
+			p->pair.second = value;
+			return std::pair<iterator, bool>(p, false);
 		}
-		p = &(*p)->next;
+		p = p->next;
 	}
 
-	*p = (Node*)xmalloc(sizeof(Node));
-	Node* ret = *p;
+	used_size_++;
+	if(rate()>0.8f){
+		expand(1);
+	}
+
+	Node* ret = (Node*)xmalloc(sizeof(Node));
 	new(ret) Node(key, value);
+
+	Node** pp = &begin_[calc_index(hash)];
+	ret->next = *pp;
+	*pp = ret;
 
 	if(ordered_tail_){
 		ordered_tail_->ordered_next = ret;
@@ -322,11 +330,6 @@ std::pair<typename OrderedHashtable<Key, Val, Fun>::iterator, bool> OrderedHasht
 	else{
 		ordered_head_ = ret;
 		ordered_tail_ = ret;
-	}
-
-	used_size_++;
-	if(rate()>0.8f){
-		expand(1);
 	}
 
 	return std::pair<iterator, bool>(ret, true);
@@ -421,40 +424,18 @@ void visit_members(Visitor& m, const OrderedHashtable<Key, Val, Fun>& values){
 	}
 }
 
-struct PairDummy{
-	static PairDummy second;
-};
-
-template<class T, class U>
-struct Pair{
-	T first;
-	U second;
-
-	Pair(){}
-
-	Pair(const T& t, const U& u)
-		:first(t), second(u){}
-};
-
-template<class T>
-struct Pair<T, PairDummy> : PairDummy{
-	T first;
-
-	Pair(){}
-
-	Pair(const T& t, PairDummy)
-		:first(t){}
-};
-
 template<class Key, class Val, class Fun>
 class Hashtable{
 public:
 
-	typedef Pair<Key, Val> pair_t;
+	typedef std::pair<Key, Val> pair_t;
 
 	struct Node{
 		pair_t pair;
 		Node* next;
+
+		Key& key(){ return pair.first; }
+		Val& value(){ return pair.second; }
 		
 		Node()
 			:next(0){}
@@ -555,7 +536,7 @@ public:
 	* \brief iに対応する要素を返す
 	*
 	*/
-	iterator find(const Key& key){
+	Node* find(const Key& key){
 		return find(key, Fun::hash(key));
 	}
 
@@ -563,7 +544,7 @@ public:
 	* \brief iに対応する要素を返す
 	*
 	*/
-	iterator find(const Key& key, uint_t hash);
+	Node* find(const Key& key, uint_t hash);
 
 	template<class NKey>
 	iterator find(const NKey& key, uint_t hash){
@@ -579,7 +560,7 @@ public:
 	}
 
 	template<class NKey>
-	iterator find(const NKey& key){
+	Node* find(const NKey& key){
 		return find(key, Fun::hash(key));
 	}
 
@@ -587,7 +568,7 @@ public:
 	* \brief iに対応する要素を設定する
 	*
 	*/	
-	std::pair<iterator, bool> insert(const Key& key, const Val& value){
+	Node* insert(const Key& key, const Val& value){
 		return insert(key, value, Fun::hash(key));
 	}
 
@@ -595,20 +576,13 @@ public:
 	* \brief iに対応する要素を設定する
 	*
 	*/	
-	std::pair<iterator, bool> insert(const Key& key, const Val& value, uint_t hash);
+	Node* insert(const Key& key, const Val& value, uint_t hash);
 
 	/**
 	* \brief keyに対応する値を削除する
 	*
 	*/
 	void erase(const Key& key);
-
-	iterator erase(iterator it){
-		iterator ret = it;
-		++ret;
-		erase(it->first);
-		return ret;
-	}
 
 	/**
 	* \brief 連想配列の容量を返す
@@ -625,8 +599,6 @@ public:
 	bool empty(){
 		return used_size_==0;
 	}
-
-	Val& operator [](const Key& key);
 
 	void clear();
 
@@ -740,62 +712,41 @@ void Hashtable<Key, Val, Fun>::destroy(){
 }
 
 template<class Key, class Val, class Fun>
-typename Hashtable<Key, Val, Fun>::iterator Hashtable<Key, Val, Fun>::find(const Key& key, uint_t hash){
-	Node** pp = &begin_[calc_index(hash)];
-	Node* p = *pp;
+typename Hashtable<Key, Val, Fun>::Node* Hashtable<Key, Val, Fun>::find(const Key& key, uint_t hash){
+	Node* p = begin_[calc_index(hash)];
 	while(p){
 		if(Fun::eq(p->pair.first, key)){
-			return iterator(pp, begin_+size_, p);
+			return p;
 		}
 		p = p->next;
 	}
-	return end();
+	return 0;
 }
 
 template<class Key, class Val, class Fun>
-Val& Hashtable<Key, Val, Fun>::operator [](const Key& key){
-	uint_t hash = Fun::hash(key);
-	Node** p = &begin_[calc_index(hash)];
-	while(*p){
-		if(Fun::eq((*p)->pair.first, key)){
-			return (*p)->pair.second;
+typename Hashtable<Key, Val, Fun>::Node* Hashtable<Key, Val, Fun>::insert(const Key& key, const Val& value, uint_t hash){
+	Node* p = begin_[calc_index(hash)];
+	while(p){
+		if(Fun::eq(p->pair.first, key)){
+			p->pair.second = value;
+			return p;
 		}
-		p = &(*p)->next;
+		p = p->next;
 	}
-
-	*p = (Node*)xmalloc(sizeof(Node));
-	Node* ret = *p;
-	new(ret) Node(key, Val());
 
 	used_size_++;
 	if(rate()>0.8f){
 		expand(1);
 	}
 
-	return ret->pair.second;
-}
-
-template<class Key, class Val, class Fun>
-std::pair<typename Hashtable<Key, Val, Fun>::iterator, bool> Hashtable<Key, Val, Fun>::insert(const Key& key, const Val& value, uint_t hash){
-	Node** p = &begin_[calc_index(hash)];
-	while(*p){
-		if(Fun::eq((*p)->pair.first, key)){
-			(*p)->pair.second = value;
-			return std::pair<iterator, bool>(iterator(p, begin_+size_, *p), false);
-		}
-		p = &(*p)->next;
-	}
-
-	*p = (Node*)xmalloc(sizeof(Node));
-	Node* ret = *p;
+	Node* ret = (Node*)xmalloc(sizeof(Node));
 	new(ret) Node(key, value);
 
-	used_size_++;
-	if(rate()>0.8f){
-		expand(1);
-	}
+	Node** pp = &begin_[calc_index(hash)];
+	ret->next = *pp;
+	*pp = ret;
 
-	return std::pair<iterator, bool>(iterator(begin_ + calc_index(hash), begin_+size_, ret), true);
+	return ret;
 }
 
 template<class Key, class Val, class Fun>

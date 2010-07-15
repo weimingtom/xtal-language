@@ -229,7 +229,7 @@ public:
 	* \brief I—¹‚µ‚Ä‚¢‚é‚©’²‚×‚é
 	*/
 	bool eos(){
-		return is_undefined(peek());
+		return XTAL_detail_is_undefined(peek());
 	}
 
 	/**
@@ -273,7 +273,7 @@ private:
 	typedef FastStack<StackInfo> stack_t;
 	stack_t stack_;
 
-	void push(uint_t mins, uint_t cur_state, uint_t nodes, const State& pos){
+	void push(uint_t /*mins*/, uint_t cur_state, uint_t nodes, const State& pos){
 		StackInfo temp = {cur_state, nodes, pos};
 		stack_.push(temp);
 	}
@@ -368,7 +368,7 @@ protected:
 
 	void expand();
 
-	AnyPtr& access(int_t pos){
+	AnyPtr& access(uint_t pos){
 		if(pos<base_*ONE_BLOCK_SIZE){ 
 			return undefined; 
 		}
@@ -388,9 +388,9 @@ protected:
 	uint_t num_;
 	uint_t max_;
 
-	int_t pos_;
-	int_t read_;
-	int_t base_;
+	uint_t pos_;
+	uint_t read_;
+	uint_t base_;
 
 	uint_t lineno_;
 	int_t record_pos_;

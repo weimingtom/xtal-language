@@ -243,7 +243,6 @@ void ObjectSpace::initialize(){
 
 	disable_gc();
 
-	class_map_.expand(5);
 	value_map_.expand(5);
 
 	expand_objects_list();
@@ -255,42 +254,48 @@ void ObjectSpace::initialize(){
 		&CppClassSymbol<String>::value,
 	};
 
+	Class* classes[sizeof(symbols)/sizeof(symbols[0])];
 	uint_t nsize = sizeof(symbols)/sizeof(symbols[0]);
 
 	for(uint_t i=0; i<nsize; ++i){
 		Class* p = object_xmalloc<Class>();
-		class_map_.insert(symbols[i]->key(), p);
 		p->special_initialize();
+		classes[i] = p;
+		value_map_.insert(symbols[i]->key(), p);
 	}
 
 	for(uint_t i=0; i<nsize; ++i){
-		Class* p = (Class*)class_map_.find(symbols[i]->key())->second;
+		Class* p = classes[i];
 		new(p) Class(Class::cpp_class_t());
 	}
 	
 	for(uint_t i=0; i<nsize; ++i){
-		Class* p = (Class*)class_map_.find(symbols[i]->key())->second;
+		Class* p = classes[i];
 		p->special_initialize(&VirtualMembersT<Class>::value);
+		p->inc_ref_count();
 	}
 
 	for(uint_t i=0; i<nsize; ++i){
-		Class* p = (Class*)class_map_.find(symbols[i]->key())->second;
-		register_gc(p);
-		p->inc_ref_count();
+		Class* p = classes[i];
 		p->set_symbol_data(symbols[i]);
+		register_gc(p);
+	}
+
+	SmartPtr<Lib> lib = XNew<Lib>();
+	lib->inherit(cpp_class(&CppClassSymbol<AutoLoader>::value));
+	lib->append_load_path(XTAL_STRING("."));
+	lib->set_cpp_singleton();
+
+	SmartPtr<Global> global = XNew<Global>();
+	global->inherit(cpp_class(&CppClassSymbol<Class>::value));
+	global->set_cpp_singleton();
+
+	for(CppClassSymbolData* p=CppClassSymbolData::head; p; p=p->next){
+		cpp_class(p)->prebind();
 	}
 }
 
 void ObjectSpace::uninitialize(){
-	for(map_t::iterator it=class_map_.begin(), last=class_map_.end(); it!=last; ++it){
-		it->second->dec_ref_count();
-	}
-
-	for(map_t::iterator it=value_map_.begin(), last=value_map_.end(); it!=last; ++it){
-		it->second->dec_ref_count();
-	}
-
-	class_map_.destroy();
 	value_map_.destroy();
 
 	clear_cache();
@@ -304,7 +309,7 @@ void ObjectSpace::uninitialize(){
 			//fprintf(stderr, "exists cycled objects %d\n", objects_count_);
 			//print_alive_objects();
 
-		print_all_objects();
+			print_all_objects();
 
 #ifndef XTAL_CHECK_REF_COUNT
 
@@ -378,7 +383,7 @@ void ObjectSpace::print_all_objects(){
 			std::string classpre = "CLASS: ";
 			std::string stringpre = "STRING: ";
 			for(ConnectedPointer it = begin; it!=current; ++it){
-				switch(type(**it)){
+				switch(XTAL_detail_type(**it)){
 					XTAL_DEFAULT{
 						RefCountingBase* p = *it;
 						int_t rc = p->ref_count();
@@ -460,12 +465,13 @@ ConnectedPointer ObjectSpace::sweep_dead_objects(ConnectedPointer first, Connect
 	do for(RefCountingBase** pp=cpre1.begin(), **ppend=cpre1.end(); pp!=ppend; --pp){
 		RefCountingBase* p = *pp;
 
-		if(!p->destroyed()){
-			if(!p->can_not_destroy()){
-				p->destroy();
+		if(!p->object_destroyed()){
+			if(!p->alive_ref_count()){
+				p->object_destroy();
 			}
-
-			continue;
+			else{
+				continue;
+			}
 		}
 
 		p->object_free();
@@ -494,7 +500,7 @@ void ObjectSpace::destroy_objects(ConnectedPointer it, ConnectedPointer end){
 	ConnectedPointerEnumerator e(it, end);
 	do for(RefCountingBase** pp=e.begin(), **ppend=e.end(); pp!=ppend; ++pp){
 		(*pp)->unset_finalizer_flag();
-		(*pp)->destroy();
+		(*pp)->object_destroy();
 	}while(e.move());
 }
 
@@ -548,7 +554,7 @@ ConnectedPointer ObjectSpace::find_alive_objects(ConnectedPointer alive, Connect
 
 		ConnectedPointerEnumerator e(alive, current);
 		do for(RefCountingBase** pp=e.begin(), **ppend=e.end(); pp!=ppend; ++pp){
-			if((*pp)->can_not_destroy()){
+			if((*pp)->alive_ref_count()){
 				end = false;
 				(*pp)->visit_members(m); // 生存確定オブジェクトは、参照カウンタを元に戻す
 				std::swap(*pp, *alive++);
@@ -574,8 +580,6 @@ void ObjectSpace::full_gc(){
 	}
 
 	ScopeCounter cc(&cycle_count_);
-
-	vmachine_swap_temp();
 	
 	while(true){			
 		ConnectedPointer current(objects_count_, objects_list_begin_);
@@ -602,14 +606,15 @@ void ObjectSpace::full_gc(){
 			bool exists_have_finalizer = false;
 			
 			// 死者となる予定のオブジェクトのfinalizerを走らせる
-			ConnectedPointerEnumerator e(alive, current);
-			do for(RefCountingBase** pp=e.begin(), **ppend=e.end(); pp!=ppend; ++pp){
-				RefCountingBase* p = *pp;
+			for(ConnectedPointer it=alive; it!=current; ++it){
+				RefCountingBase* p = *it;
 				if(p->have_finalizer()){
 					exists_have_finalizer = true;
+					VMachinePtr oldvm = set_vmachine(vmachine_take_over());
 					((Base*)p)->finalize();
+					vmachine_take_back(set_vmachine(oldvm));
 				}
-			}while(e.move());
+			}
 
 			if(exists_have_finalizer){
 				// finalizerでオブジェクトが作られたかもしれないので、currentを反映する
@@ -645,25 +650,28 @@ void ObjectSpace::full_gc(){
 
 	objects_generation_line_ = objects_count_;
 	objects_destroyed_count_ = 0;
+}
 
-	vmachine_swap_temp();
+void ObjectSpace::set_cpp_class(CppClassSymbolData* key, const ClassPtr& cls){
+	if(map_t::Node* it = value_map_.find(key->key())){
+		it->value() = cls;
+	}
+	else{
+		value_map_.insert(key->key(), cls);
+	}
 }
 
 Class* ObjectSpace::make_cpp_class(CppClassSymbolData* key){
 	ClassPtr cls = xnew<Class>(Class::cpp_class_t());
-	RefCountingBase* ret = cls.get();
-	ret->inc_ref_count();
 	cls->set_symbol_data(key);
-	class_map_.insert(key->key(), ret);
-	return ((Class*)ret);
+	value_map_.insert(key->key(), cls);
+	return cls.get();
 }
 
 RefCountingBase* ObjectSpace::make_cpp_value(CppValueSymbolData* key){
 	AnyPtr any = key->maker();
-	RefCountingBase* ret = rcpvalue(any);
-	ret->inc_ref_count();
-	value_map_.insert(key->key(), ret);
-	return ret;
+	value_map_.insert(key->key(), XTAL_detail_rcpvalue(any));
+	return XTAL_detail_rcpvalue(any);
 }
 
 void ObjectSpace::register_gc(RefCountingBase* p){

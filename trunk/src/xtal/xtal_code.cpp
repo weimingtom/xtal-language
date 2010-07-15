@@ -1,6 +1,7 @@
 #include "xtal.h"
 #include "xtal_bind.h"
 #include "xtal_macro.h"
+#include "xtal_stringspace.h"
 
 namespace xtal{
 
@@ -20,7 +21,7 @@ void Class_inherit(const ClassPtr& cls, const ClassPtr cls2){
 
 Code::Code(){
 	set_singleton();
-	set_object_temporary_name(Xid(filelocal));
+	set_object_temporary_name(XTAL_DEFINED_ID(filelocal));
 	set_object_force(500);
 
 	first_fun_ = XNew<Method>(nul<Frame>(), to_smartptr(this), (FunInfo*)0);
@@ -40,10 +41,11 @@ void Code::generated(){
 
 	inherit(builtin());
 	
-	Class* it = this;
-	Xdef_method_alias(inherit, &Class_inherit);
-	Xdef_method_alias(check_implicit_lookup, &filelocal_check_implicit_lookup);
-	def(Xid(filelocal), to_smartptr(this));
+	XTAL_BIND_DIRECT(this){
+		Xdef_method_alias(inherit, &Class_inherit);
+		Xdef_method_alias(check_implicit_lookup, &filelocal_check_implicit_lookup);
+		def(XTAL_DEFINED_ID(filelocal), to_smartptr(this));
+	}
 
 	first_fun_->set_info(&xfun_info_table_[0]);
 }
@@ -129,16 +131,16 @@ Code::LineNumberInfo* Code::compliant_lineno_info(const inst_t* p){
 
 void Code::on_rawcall(const VMachinePtr& vm){
 	if(vm->has_arguments()){
-		overwrite_member(Xid(arg), vm->make_arguments());
+		overwrite_member(XTAL_DEFINED_ID(arg), vm->make_arguments());
+		vm->setup_call();
+		vm->set_arg_this(to_smartptr(this));
+		first_fun_->rawcall(vm);
+		vm->return_result(vm->result_and_cleanup_call());
 	}
 	else{
-		overwrite_member(Xid(arg), null);
+		vm->set_arg_this(to_smartptr(this));
+		first_fun_->rawcall(vm);
 	}
-
-	vm->setup_call();
-	vm->set_arg_this(to_smartptr(this));
-	first_fun_->rawcall(vm);
-	vm->return_result(vm->result_and_cleanup_call());
 }
 
 void Code::find_near_variable_inner(const IDPtr& primary_key, const ScopeInfo& info, IDPtr& pick, int_t& minv){
@@ -180,7 +182,7 @@ void Code::check_implicit_lookup(){
 	for(uint_t i=0; i<implicit_table_.size(); ++i){
 		const IDPtr& id = unchecked_ptr_cast<ID>(identifier_table_.at(implicit_table_[i].id));
 		const AnyPtr& ret = member(id);
-		if(raweq(undefined, ret)){
+		if(XTAL_detail_raweq(undefined, ret)){
 			if(!ary){
 				ary = XNew<Array>();
 			}

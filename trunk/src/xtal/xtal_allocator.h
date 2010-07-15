@@ -53,7 +53,7 @@ public:
 	typedef void* data_t;
 
 	enum{
-		BLOCK_SIZE = 256,
+		BLOCK_SIZE = 512,
 		BLOCK_COUNT = 16,
 		BLOCK_MEMORY_SIZE = BLOCK_SIZE*BLOCK_COUNT
 	};
@@ -129,7 +129,7 @@ public:
 
 	FixedAllocator();
 
-	void init(MemoryPool* pool, uint_t block_size);
+	void init(MemoryPool* pool, uint_t block_size, uint_t block_count);
 
 	void* malloc();
 
@@ -159,28 +159,28 @@ class SmallObjectAllocator{
 public:
 
 	enum{
-		POOL_SIZE = 10,
+		POOL_SIZE = 32,
 		ONE_SIZE = FixedAllocator::ONE_SIZE,
 		ONE_SIZE_SHIFT = static_ntz<ONE_SIZE>::value,
-		HANDLE_MAX_SIZE = POOL_SIZE*ONE_SIZE
+		HANDLE_MAX_SIZE = (POOL_SIZE-1)*ONE_SIZE
 	};
+
+#define XTAL_SMALL_ALLOCATOR_HANDLE_SIZE(size) (size<SmallObjectAllocator::HANDLE_MAX_SIZE)
 
 public:
 
 	SmallObjectAllocator();
 	
 	void* malloc(std::size_t size){
-		XTAL_ASSERT(size<=HANDLE_MAX_SIZE);
+		XTAL_ASSERT(XTAL_SMALL_ALLOCATOR_HANDLE_SIZE(size));
 		std::size_t wsize = align(size, ONE_SIZE)>>ONE_SIZE_SHIFT;
-		if(wsize==0){ return 0; }
-		return pool_[wsize-1].malloc();
+		return pool_[wsize].malloc();
 	}
 
 	void free(void* p, std::size_t size){
-		XTAL_ASSERT(size<=HANDLE_MAX_SIZE);
-		if(std::size_t wsize = align(size, ONE_SIZE)>>ONE_SIZE_SHIFT){
-			pool_[wsize-1].free(p);
-		}
+		XTAL_ASSERT(XTAL_SMALL_ALLOCATOR_HANDLE_SIZE(size));
+		std::size_t wsize = align(size, ONE_SIZE)>>ONE_SIZE_SHIFT;
+		pool_[wsize].free(p);
 	}
 
 	void release();
@@ -194,6 +194,49 @@ private:
 };
 
 #endif
+
+void* xmalloc(size_t);
+void xfree(void*, size_t);
+void* xmalloc_align(size_t, size_t);
+void xfree_align(void*, size_t, size_t);
+
+enum{
+	ALIGN_MIN = 8
+};
+
+template<int Size, int Align>
+struct ObjectXMalloc{
+	static void* xm(){ return xmalloc_align(Size, Align); }
+	static void xf(void* p){ xfree_align(p, Size, Align); }
+};
+
+template<int Size>
+struct ObjectXMalloc<Size, 0>{
+	static void* xm(){ return xmalloc(Size); }
+	static void xf(void* p){ xfree(p, Size); }
+};
+
+template<class T>
+inline T* object_xmalloc(){
+	return (T*)ObjectXMalloc<sizeof(T), ((int)AlignOf<T>::value<=(int)ALIGN_MIN) ? 0 : AlignOf<T>::value>::xm();
+}
+
+template<class T>
+inline T* new_object_xmalloc(){
+	return new(object_xmalloc<T>()) T();
+}
+
+template<class T>
+inline void object_xfree(T* p){
+	ObjectXMalloc<sizeof(T), ((int)AlignOf<T>::value<=(int)ALIGN_MIN) ? 0 : AlignOf<T>::value>::xf(p);
+}
+
+template<class T>
+inline void delete_object_xfree(T* p){
+	p->~T();
+	object_xfree(p);
+}
+
 
 }//namespace 
 

@@ -33,8 +33,8 @@ public:
 	* keyが整数であれば、順番指定引数、文字列であれば名前付き引数を返す
 	*/
 	const AnyPtr& op_at(const AnyPtr& key){
-		if(type(key)==TYPE_INT){
-			return op_at_int(ivalue(key));
+		if(XTAL_detail_is_ivalue(key)){
+			return op_at_int(XTAL_detail_ivalue(key));
 		}
 		return op_at_string(key->to_s());
 	}

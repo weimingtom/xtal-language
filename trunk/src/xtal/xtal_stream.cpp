@@ -10,41 +10,25 @@ uint_t Stream::tell(){
 	return 0;
 }
 
-void Stream::put_s(const StringPtr& str){
-	write(str->data(), str->data_size()*sizeof(char_t));
-}
-
-void Stream::put_s(const char_t* str){
-	write(str, string_data_size(str)*sizeof(char_t));
-}
-
-void Stream::put_s(const char_t* str, const char_t* end){
-	write(str, (end-str)*sizeof(char_t));
+void Stream::put_s(const AnyPtr& str){
+	put_s(str->to_s());
 }
 
 void Stream::put_s(const char_t* str, uint_t length){
 	write(str, length*sizeof(char_t));
 }
 
-void Stream::put_s(const LongLivedString& str){
-	write(str.str(), str.size()*sizeof(char_t));
-}
-
-void Stream::put_s(const AnyPtr& str){
-	put_s(str->to_s());
-}
-
-uint_t Stream::write(const void* p, uint_t size){
+uint_t Stream::write(const void*, uint_t){
 	XTAL_SET_EXCEPT(unsupported_error(get_class(), Xid(write), null));
 	return 0;
 }
 
-uint_t Stream::read(void* p, uint_t size){
+uint_t Stream::read(void*, uint_t){
 	XTAL_SET_EXCEPT(unsupported_error(get_class(), Xid(read), null));
 	return 0;
 }
 
-void Stream::seek(uint_t offset){
+void Stream::seek(uint_t){
 	XTAL_SET_EXCEPT(unsupported_error(get_class(), Xid(seek), null));
 }
 
@@ -132,12 +116,16 @@ void Stream::read_strict(void* p, uint_t size){
 }
 
 void Stream::print(const AnyPtr& value){
-	return put_s(value);
+	put_s(value);
 }
 
 void Stream::println(const AnyPtr& value){
 	put_s(value);
 	put_s(XTAL_STRING("\n"));
+}
+
+void Stream::printf(const StringPtr& format_string, const ArgumentsPtr& args){
+	put_s(format_string->call(args));
 }
 
 uint_t Stream::pour(const StreamPtr& in_stream, uint_t size){
@@ -174,7 +162,7 @@ void Stream::block_next(const VMachinePtr& vm){
 	close();
 }
 
-void Stream::block_break(const VMachinePtr& vm){
+void Stream::block_break(const VMachinePtr&){
 	close();
 }
 
@@ -614,8 +602,8 @@ yield0:
 			code_[code_count_++] = text_[r_];
 		}
 		else{
-			code_[code_count_++] = matchpos_;
-			code_[code_count_++] = ((matchpos_>>4) & 0xf0) | (matchlen_-NO_COMPRESS_SIZE);
+			code_[code_count_++] = (u8)matchpos_;
+			code_[code_count_++] = (u8)(((matchpos_>>4) & 0xf0) | (matchlen_-NO_COMPRESS_SIZE));
 		}
 
 		mask_ = (mask_<<1) & 0xff;
@@ -813,7 +801,7 @@ public:
 		RING_BUF_SIZE = 4096,
 		RING_BUF_MASK = RING_BUF_SIZE-1,
 		NO_COMPRESS_SIZE = 3,
-		MAX_MATCH_LEN = 15+NO_COMPRESS_SIZE,
+		MAX_MATCH_LEN = 15+NO_COMPRESS_SIZE
 	};	
 
 	LZDecoder(const StreamPtr& in){

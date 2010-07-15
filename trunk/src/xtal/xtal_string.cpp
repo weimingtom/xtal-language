@@ -195,8 +195,8 @@ String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size
 	uint_t sz = size1 + size2;
 	if(sz<SMALL_STRING_MAX){
 		value_.init_small_string(sz);
-		string_copy(value_.s(), str1, size1);
-		string_copy(value_.s()+size1, str2, size2);
+		string_copy(XTAL_detail_svalue(*this), str1, size1);
+		string_copy(XTAL_detail_svalue(*this)+size1, str2, size2);
 	}
 	else{
 		StringData* sd = new_string_data(sz);
@@ -218,25 +218,25 @@ const char_t* String::c_str() const{
 }
 
 const char_t* String::data() const{
-	switch(type(*this)){
+	switch(XTAL_detail_type(*this)){
 		XTAL_NODEFAULT;
-		XTAL_CASE(TYPE_SMALL_STRING){ return value_.s(); }
-		XTAL_CASE(TYPE_LONG_LIVED_STRING){ return value_.sp(); }
-		XTAL_CASE(TYPE_INTERNED_STRING){ return value_.sp(); }
-		XTAL_CASE(TYPE_STRING){ return ((StringData*)rcpvalue(*this))->buf(); }
+		XTAL_CASE(TYPE_SMALL_STRING){ return XTAL_detail_svalue(*this); }
+		XTAL_CASE(TYPE_LONG_LIVED_STRING){ return XTAL_detail_spvalue(*this); }
+		XTAL_CASE(TYPE_INTERNED_STRING){ return XTAL_detail_spvalue(*this); }
+		XTAL_CASE(TYPE_STRING){ return ((StringData*)XTAL_detail_rcpvalue(*this))->buf(); }
 	}
 	return XTAL_L("");
 }
 
 uint_t String::data_size() const{
-	switch(type(*this)){
+	switch(XTAL_detail_type(*this)){
 		XTAL_NODEFAULT;
 
 		XTAL_CASE3(TYPE_SMALL_STRING, TYPE_INTERNED_STRING, TYPE_LONG_LIVED_STRING){ 
-			return value_.string_size(); 
+			return XTAL_detail_ssize(*this); 
 		}
 
-		XTAL_CASE(TYPE_STRING){ return ((StringData*)rcpvalue(*this))->data_size(); }
+		XTAL_CASE(TYPE_STRING){ return ((StringData*)XTAL_detail_rcpvalue(*this))->data_size(); }
 	}
 	return 0;
 }
@@ -246,12 +246,12 @@ const StringPtr& String::clone() const{
 }
 
 IDPtr String::intern() const{
-	switch(type(*this)){
+	switch(XTAL_detail_type(*this)){
 		XTAL_NODEFAULT;
 		XTAL_CASE2(TYPE_SMALL_STRING, TYPE_INTERNED_STRING){ return unchecked_ptr_cast<ID>(ap(*this)); }
-		XTAL_CASE(TYPE_LONG_LIVED_STRING){ return xtal::intern(value_.sp(), value_.string_size()); }
+		XTAL_CASE(TYPE_LONG_LIVED_STRING){ return xtal::intern(XTAL_detail_spvalue(*this), XTAL_detail_ssize(*this)); }
 		XTAL_CASE(TYPE_STRING){
-			StringData* p = ((StringData*)rcpvalue(*this));
+			StringData* p = ((StringData*)XTAL_detail_rcpvalue(*this));
 			return xtal::intern(p->buf(), p->data_size());
 		}
 	}
@@ -259,7 +259,7 @@ IDPtr String::intern() const{
 }
 
 bool String::is_interned() const{
-	switch(type(*this)){
+	switch(XTAL_detail_type(*this)){
 		XTAL_NODEFAULT;
 		XTAL_CASE2(TYPE_SMALL_STRING, TYPE_INTERNED_STRING){ return true; }
 		XTAL_CASE2(TYPE_LONG_LIVED_STRING, TYPE_STRING){ return false; }
@@ -318,7 +318,7 @@ float_t String::to_f() const{
 }
 
 AnyPtr String::each() const{
-	return send(Xid(each));
+	return send(XTAL_DEFINED_ID(each));
 }
 
 bool String::is_ch() const{
@@ -326,7 +326,7 @@ bool String::is_ch() const{
 }
 
 bool String::is_empty() const{
-	return raweq(*this, empty_string);
+	return XTAL_detail_raweq(*this, empty_string);
 }
 
 int_t String::ascii() const{

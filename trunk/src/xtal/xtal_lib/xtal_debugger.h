@@ -154,7 +154,7 @@ public:
 
 		while(ArrayPtr cmd = recv_command()){
 			AnyPtr type = cmd->at(0);
-			if(raweq(type, Xid(start))){
+			if(XTAL_detail_raweq(type, Xid(start))){
 				break;
 			}
 			exec_command(cmd);
@@ -189,7 +189,7 @@ private:
 		CodePtr ret;
 		while(ArrayPtr cmd = recv_command()){
 			AnyPtr type = cmd->at(0);
-			if(raweq(type, Xid(required_source))){
+			if(XTAL_detail_raweq(type, Xid(required_source))){
 				ret = ptr_cast<Code>(cmd->at(1));
 				if(ret){
 					MapPtr map = xnew<Map>();
@@ -203,7 +203,7 @@ private:
 				continue;
 			}
 
-			if(raweq(type, Xid(start))){
+			if(XTAL_detail_raweq(type, Xid(start))){
 				break;
 			}
 
@@ -220,7 +220,7 @@ private:
 
 		AnyPtr type = cmd->at(0);
 
-		if(raweq(type, Xid(add_breakpoint))){
+		if(XTAL_detail_raweq(type, Xid(add_breakpoint))){
 			AnyPtr ddd = cmd->at(1);
 			if(MapPtr value = ptr_cast<Map>(code_map_->at(cmd->at(1)))){
 				if(CodePtr code = ptr_cast<Code>(value->at(Xid(code)))){
@@ -232,7 +232,7 @@ private:
 			return;
 		}
 
-		if(raweq(type, Xid(remove_breakpoint))){
+		if(XTAL_detail_raweq(type, Xid(remove_breakpoint))){
 			if(MapPtr value = ptr_cast<Map>(code_map_->at(cmd->at(1)))){
 				if(CodePtr code = ptr_cast<Code>(value->at(Xid(code)))){
 					code->remove_breakpoint(cmd->at(2)->to_i());
@@ -242,12 +242,12 @@ private:
 			return;
 		}
 
-		if(raweq(type, Xid(add_eval_expr))){
+		if(XTAL_detail_raweq(type, Xid(add_eval_expr))){
 			eval_exprs_->set_at(cmd->at(1), cmd->at(2));
 			return;
 		}
 
-		if(raweq(type, Xid(remove_eval_expr))){
+		if(XTAL_detail_raweq(type, Xid(remove_eval_expr))){
 			eval_exprs_->erase(cmd->at(1));
 			return;
 		}
@@ -259,7 +259,7 @@ private:
 		ret->set_at(1, v->to_s());
 
 		// 基本型かチェック
-		switch(type(v)){
+		switch(XTAL_detail_type(v)){
 			case TYPE_NULL:
 			case TYPE_UNDEFINED:
 			case TYPE_INT:
@@ -278,7 +278,7 @@ private:
 			return ret;
 		}
 
-		switch(type(v)){
+		switch(XTAL_detail_type(v)){
 			XTAL_DEFAULT{}
 
 			XTAL_CASE(TYPE_ARRAY){
@@ -406,30 +406,30 @@ private:
 			if(ArrayPtr cmd = ptr_cast<Array>(stream_->deserialize())){
 				AnyPtr type = cmd->at(0);
 
-				if(raweq(type, Xid(move_callstack))){
+				if(XTAL_detail_raweq(type, Xid(move_callstack))){
 					level = cmd->at(1)->to_i();
 					send_break(info, level);
 					continue;
 				}
 
-				if(raweq(type, Xid(nostep))){
+				if(XTAL_detail_raweq(type, Xid(nostep))){
 					send_break(info, level);
 					continue;
 				}
 
-				if(raweq(type, Xid(run))){
+				if(XTAL_detail_raweq(type, Xid(run))){
 					return debug::RUN;
 				}
 
-				if(raweq(type, Xid(step_into))){
+				if(XTAL_detail_raweq(type, Xid(step_into))){
 					return debug::STEP_INTO;
 				}
 
-				if(raweq(type, Xid(step_over))){
+				if(XTAL_detail_raweq(type, Xid(step_over))){
 					return debug::STEP_OVER;
 				}
 
-				if(raweq(type, Xid(step_out))){
+				if(XTAL_detail_raweq(type, Xid(step_out))){
 					return debug::STEP_OUT;
 				}
 

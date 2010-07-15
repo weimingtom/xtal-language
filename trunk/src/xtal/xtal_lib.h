@@ -11,20 +11,12 @@ namespace xtal{
 
 /**
 * \xbind lib::builtin
-* \brief ライブラリの登録などに使うクラスの一種
+* \brief メンバにアクセスすると、名前に対応したライブラリファイルを読み込む機能をもったクラスの一種
 */
-class Lib : public Class{
+class AutoLoader : public Class{
 public:
 
-	struct most_top_level_t{};
-
-	Lib(most_top_level_t);
-
-	/**
-	* \xbind
-	* \brief コンストラクタ
-	*/
-	Lib();
+	AutoLoader();
 	
 	const AnyPtr& on_rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
 
@@ -42,11 +34,18 @@ public:
 	}
 
 private:
-
 	ArrayPtr load_path_list_;
 	MapPtr path_map_;
 };
 
+/**
+* \xbind lib::builtin
+* \brief ライブラリの登録などに使うクラスの一種
+*/
+class Lib : public AutoLoader{
+public:
+	Lib();
+};
 
 class Global : public Class{
 public:

@@ -7,13 +7,13 @@ class ThreadTest{
 		t2: Thread();
 		
 		t1.start(fun(){
-			10.times{
+			1000.times{
 				ret.push_back(it);
 			}
 		});
 		
 		t2.start(fun(){
-			10.times{
+			1000.times{
 				ret.push_back(it);
 			}
 		});
@@ -21,7 +21,7 @@ class ThreadTest{
 		t1.join;
 		t2.join;
 		
-		assert ret.size==20;		
+		assert ret.p.size==2000;		
 	}
 	
 	mee#Test{

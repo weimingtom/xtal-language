@@ -233,7 +233,7 @@ void call_breakpoint_hook(int_t kind, const HookInfoPtr& ainfo){
 			XTAL_CASE(BSTATE_NONE){
 				int_t count = disable_force();
 				AnyPtr hookret = hook ? hook->call(info) : AnyPtr(0);
-				int_t ret = type(hookret)==TYPE_INT ? hookret->to_i() : -1;
+				int_t ret = XTAL_detail_is_ivalue(hookret) ? hookret->to_i() : -1;
 				enable_force(count);
 
 				switch(ret){

@@ -7,7 +7,7 @@ namespace xtal{
 
 namespace{
 	Class* empty_inherited_classes[1] = {0};
-};
+}
 	
 InstanceVariables* InstanceVariables::create(ClassInfo* class_info){
 	if(info_==&empty_class_info){
@@ -36,8 +36,8 @@ InstanceVariables* InstanceVariables::create(ClassInfo* class_info){
 		int_t& retinstall_count = *(int_t*)retbuf; retbuf += sizeof(int_t);
 		retinstall_count = 2;
 		AnyPtr* retvalues = (AnyPtr*)retbuf;
-		copy_any(retvalues[0], ImmediateValue(0, info_));
-		copy_any(retvalues[1], ImmediateValue(info_->instance_variable_size, class_info));
+		XTAL_detail_copy(retvalues[0], ImmediateValue(0, info_));
+		XTAL_detail_copy(retvalues[1], ImmediateValue(info_->instance_variable_size, class_info));
 		xmemcpy(retvalues+2, values, info_->instance_variable_size);
 		xmemset(retvalues+2+info_->instance_variable_size, 0, class_info->instance_variable_size);	
 
@@ -51,7 +51,7 @@ InstanceVariables* InstanceVariables::create(ClassInfo* class_info){
 
 		int_t oldsum = 0;
 		for(int_t i=0; i<install_count; ++i){
-			oldsum += ((ClassInfo*)rawvalue(values[i]).immediate_second_vpvalue())->instance_variable_size;
+			oldsum += ((ClassInfo*)XTAL_detail_rawvalue(values[i]).immediate_second_vpvalue())->instance_variable_size;
 		}
 		int_t sum = oldsum + class_info->instance_variable_size;
 
@@ -65,7 +65,7 @@ InstanceVariables* InstanceVariables::create(ClassInfo* class_info){
 		int_t& retinstall_count = *(int_t*)retbuf; retbuf += sizeof(int_t);
 		retinstall_count = install_count+1;
 		AnyPtr* retvalues = (AnyPtr*)retbuf;
-		copy_any(retvalues[0], ImmediateValue(oldsum, class_info));
+		XTAL_detail_copy(retvalues[0], ImmediateValue(oldsum, class_info));
 		xmemcpy(retvalues+1, values, install_count+oldsum);
 		xmemset(retvalues+1+install_count+oldsum, 0, class_info->instance_variable_size);	
 
@@ -83,7 +83,7 @@ void InstanceVariables::destroy(){
 		char* buf = (char*)(this + 1);
 		AnyPtr* values = (AnyPtr*)buf;
 		for(int_t i=0, sz=sum_; i<sz; ++i){
-			dec_ref_count_force(values[i]);
+			XTAL_detail_dec_ref_count(values[i]);
 		}
 		xfree(this, sizeof(InstanceVariables)+sizeof(AnyPtr)*sum_);
 	}
@@ -94,29 +94,29 @@ void InstanceVariables::destroy(){
 		AnyPtr* values = (AnyPtr*)buf;
 
 		for(int_t i=0, sz=sum_; i<sz; ++i){
-			dec_ref_count_force(values[install_count+i]);
+			XTAL_detail_dec_ref_count(values[install_count+i]);
 		}
 
 		xfree(this, sizeof(InstanceVariables)+sizeof(int_t)+sizeof(AnyPtr)*(sum_+install_count));
 	}
 }
 
-void InstanceVariables::visit_members(Visitor& m){
-	if(info_==&empty_class_info){
+void visit_members(Visitor& m, InstanceVariables* self){
+	if(self->info_==&empty_class_info){
 
 	}
-	else if(info_){
-		char* buf = (char*)(this + 1);
+	else if(self->info_){
+		char* buf = (char*)(self + 1);
 		AnyPtr* values = (AnyPtr*)buf;
-		for(int_t i=0, sz=sum_; i<sz; ++i){
+		for(int_t i=0, sz=self->sum_; i<sz; ++i){
 			m & values[i];
 		}
 	}
 	else{
-		char* buf = (char*)(this + 1);
+		char* buf = (char*)(self + 1);
 		int_t install_count = *(int_t*)buf; buf += sizeof(int_t);
 		AnyPtr* values = (AnyPtr*)buf;
-		for(int_t i=0, sz=sum_; i<sz; ++i){
+		for(int_t i=0, sz=self->sum_; i<sz; ++i){
 			m & values[install_count+i];
 		}
 	}
@@ -201,11 +201,11 @@ void Class::overwrite(const ClassPtr& p){
 
 		for(uint_t i=0; i<alive_object_count(); ++i){
 			AnyPtr obj = alive_object(i);
-			if(type(obj)==TYPE_BASE){
+			if(XTAL_detail_type(obj)==TYPE_BASE){
 				if(obj->is(to_smartptr(this))){
 
 					AnyPtr data = obj->save_instance_variables(to_smartptr(this));
-					pvalue(obj)->init_instance_variables(p->info());
+					XTAL_detail_pvalue(obj)->init_instance_variables(p->info());
 					obj->load_instance_variables(p, data);
 
 					if(Node* it = find_node(Xid(reloaded), undefined)){
@@ -230,16 +230,14 @@ void Class::inherit(const ClassPtr& cls){
 
 	XTAL_ASSERT(cls);
 
-	cls->prebind();
-
 	int_t count = 0;
 	for(Class** pp=inherited_classes_; *pp; ++pp){
 		count++;
 	}
 
 	Class** classes = (Class**)xmalloc(sizeof(Class*)*(count+2));
-	*classes = cls.get();
-	(*classes)->inc_ref_count();
+	classes[0] = cls.get();
+	classes[0]->inc_ref_count();
 	xmemcpy(classes+1, inherited_classes_, count+1);
 	
 	if(count>0){
@@ -300,8 +298,6 @@ const NativeFunPtr& Class::def_ctor(int_t type, const NativeFunPtr& ctor_func){
 }
 
 const NativeFunPtr& Class::ctor(int_t type){
-	prebind();
-
 	const NativeFunPtr& ctor = option_ctor(type);
 
 	if(ctor){
@@ -340,7 +336,7 @@ void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 	}
 	
 	if(info()->instance_variable_size){
-		pvalue(self)->init_instance_variables(info());
+		XTAL_detail_pvalue(self)->init_instance_variables(info());
 
 		// 先頭のメソッドはインスタンス変数初期化関数
 		if(member_direct(0)){
@@ -356,7 +352,7 @@ IDPtr Class::find_near_member2(const IDPtr& primary_key, const AnyPtr& secondary
 	IDPtr minid = null;
 	AnyPtr mem = get_class()->member(Xid(members_ancestors_too));
 
-	if(is_undefined(mem)){
+	if(XTAL_detail_is_undefined(mem)){
 		return minid;
 	}
 
@@ -416,8 +412,8 @@ void Class::define_param(const LongLivedString& name, const AnyPtr& default_valu
 		member = members_.back();
 	}
 
-	if(type(member)==TYPE_STATELESS_NATIVE_METHOD){
-		NativeFunPtr method = xnew<NativeMethod>(*rawvalue(member).pth());
+	if(XTAL_detail_type(member)==TYPE_STATELESS_NATIVE_METHOD){
+		NativeFunPtr method = xnew<NativeMethod>(*XTAL_detail_pthvalue(member));
 		method->add_param(name, default_value);
 
 		if(flags_&FLAG_LAST_DEFINED_CTOR){
@@ -483,10 +479,9 @@ void Class::on_def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& 
 		XTAL_SET_EXCEPT(cpp_class<RedefinedError>()->call(Xt2("XRE1011", object, this->object_name(), name, primary_key)));
 	}
 	else{
-		Node* node = insert_node(primary_key, secondary_key);
-		node->num = members_.size();
+		Node* node = insert_node(primary_key, secondary_key, members_.size());
 		node->flags |= accessibility;
-		push_back_member(value);
+		members_.push_back(value);
 		value->set_object_parent(to_smartptr(this));
 		invalidate_cache_member();
 	}
@@ -514,14 +509,14 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 	if(const ClassPtr& klass = ptr_cast<Class>(secondary_key)){
 		for(int_t i=0; klass->inherited_classes_[i]; ++i){
 			const AnyPtr& ret = find_member(primary_key,  klass->inherited_classes_[i], accessibility, nocache);
-			if(!is_undefined(ret)){
+			if(!XTAL_detail_is_undefined(ret)){
 				return ret;
 			}
 		}
 
-		if(rawne(cpp_class<Any>(), klass)){
+		if(!XTAL_detail_raweq(cpp_class<Any>(), klass)){
 			const AnyPtr& ret = find_member(primary_key, cpp_class<Any>(), accessibility, nocache);
-			if(!is_undefined(ret)){
+			if(!XTAL_detail_is_undefined(ret)){
 				return ret;
 			}
 		}	
@@ -533,7 +528,7 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 const AnyPtr& Class::find_member_from_inherited_classes(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility, bool& nocache){
 	for(int_t i=0; inherited_classes_[i]; ++i){
 		const AnyPtr& ret = inherited_classes_[i]->find_member(primary_key, secondary_key, true, accessibility, nocache);
-		if(!is_undefined(ret)){
+		if(!XTAL_detail_is_undefined(ret)){
 			return ret;
 		}
 	}
@@ -542,14 +537,14 @@ const AnyPtr& Class::find_member_from_inherited_classes(const IDPtr& primary_key
 
 const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
 	const AnyPtr& ret = find_member(primary_key, secondary_key, accessibility, nocache);
-	if(!is_undefined(ret)){
+	if(!XTAL_detail_is_undefined(ret)){
 		return ret;
 	}
 
 	for(int_t i=0; i<CppClassSymbolData::BIND; ++i){
 		if(bind(i)){
 			const AnyPtr& ret = find_member(primary_key, secondary_key, accessibility, nocache);
-			if(!is_undefined(ret)){
+			if(!XTAL_detail_is_undefined(ret)){
 				return ret;
 			}
 		}
@@ -557,7 +552,7 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 
 	if(inherited_too){
 		const AnyPtr& ret = find_member_from_inherited_classes(primary_key, secondary_key, accessibility, nocache);
-		if(!is_undefined(ret)){
+		if(!XTAL_detail_is_undefined(ret)){
 			return ret;
 		}
 	}
@@ -567,7 +562,7 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 
 const AnyPtr& Class::on_rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
 	const AnyPtr& ret = find_member(primary_key, secondary_key, inherited_too, accessibility, nocache);
-	if(!is_undefined(ret)){
+	if(!XTAL_detail_is_undefined(ret)){
 		return ret;
 	}
 
@@ -594,8 +589,7 @@ bool Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyP
 void Class::set_member_direct(int_t i, const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
 	Frame::set_member_direct(i, value);
 	
-	Node* it = insert_node(primary_key, secondary_key);
-	it->num = i;
+	Node* it = insert_node(primary_key, secondary_key, i);
 	it->flags |= accessibility;
 	value->set_object_parent(to_smartptr(this));
 	invalidate_cache_member();
@@ -603,7 +597,7 @@ void Class::set_member_direct(int_t i, const IDPtr& primary_key, const AnyPtr& v
 
 void Class::on_set_object_parent(const ClassPtr& parent){
 	if(object_force_<parent->object_force()){
-		object_force_ = parent->object_force()-1;
+		object_force_ = (u16)parent->object_force()-1;
 		HaveParentBase::on_set_object_parent(parent);
 
 		for(uint_t i=0; i<buckets_capa_; ++i){
@@ -620,7 +614,7 @@ ValuesPtr Class::child_object_name(const AnyPtr& a){
 	for(uint_t i=0; i<buckets_capa_; ++i){
 		Node* node = buckets_[i];
 		while(node!=0){
-			if(raweq(member_direct(node->num), a)){
+			if(XTAL_detail_raweq(member_direct(node->num), a)){
 				if(node->flags&FLAG_NODE3){
 					return mv(((Node3*)node)->primary_key, ((Node3*)node)->secondary_key);
 				}
@@ -721,15 +715,13 @@ void Class::set_option_ctor(uint_t n, const NativeFunPtr& fun){
 }
 
 bool Class::is_inherited(const AnyPtr& v){
-	if(this==pvalue(v)){
+	if(this==XTAL_detail_pvalue(v)){
 		return true;
 	}
 
-	if(raweq(v, cpp_class<Any>())){
+	if(XTAL_detail_raweq(v, cpp_class<Any>())){
 		return true;
 	}
-
-	prebind();
 
 	for(int_t i=0; inherited_classes_[i]; ++i){
 		if(inherited_classes_[i]->is_inherited(v)){
@@ -745,8 +737,6 @@ bool Class::is_inherited_cpp_class(){
 		return true;
 	}
 
-	prebind();
-
 	for(int_t i=0; inherited_classes_[i]; ++i){
 		if(inherited_classes_[i]->is_inherited_cpp_class()){
 			return true;
@@ -757,10 +747,8 @@ bool Class::is_inherited_cpp_class(){
 }
 
 void Class::on_rawcall(const VMachinePtr& vm){
-	prebind();
-
 	if(is_singleton()){
-		return Any::rawsend(vm, Xid(op_call));
+		return Any::rawsend(vm, XTAL_DEFINED_ID(op_call));
 	}
 
 	if(is_native()){
@@ -784,15 +772,15 @@ void Class::on_rawcall(const VMachinePtr& vm){
 			instance = XNew<Base>();
 		}
 
-		if(type(instance)==TYPE_BASE){
-			pvalue(instance)->set_class(to_smartptr(this));
+		if(XTAL_detail_type(instance)==TYPE_BASE){
+			XTAL_detail_pvalue(instance)->set_class(to_smartptr(this));
 		}
 
 		init_instance(instance, vm);
 
 		XTAL_CHECK_EXCEPT(e){ return; }
 		
-		if(const AnyPtr& ret = member(Xid(initialize), undefined)){
+		if(const AnyPtr& ret = member(XTAL_DEFINED_ID(initialize), undefined)){
 			int_t n = vm->need_result_count();
 			vm->set_arg_this(instance);
 			ret->rawcall(vm);
@@ -830,8 +818,8 @@ void Class::s_new(const VMachinePtr& vm){
 			instance = XNew<Base>();
 		}
 
-		if(type(instance)==TYPE_BASE){
-			pvalue(instance)->set_class(to_smartptr(this));
+		if(XTAL_detail_type(instance)==TYPE_BASE){
+			XTAL_detail_pvalue(instance)->set_class(to_smartptr(this));
 			init_instance(instance, vm);
 		}
 
@@ -840,9 +828,9 @@ void Class::s_new(const VMachinePtr& vm){
 }
 
 AnyPtr Class::ancestors(){
-	if(raweq(to_smartptr(this), cpp_class<Any>())){
+	if(XTAL_detail_raweq(to_smartptr(this), cpp_class<Any>())){
 		return null;
-	}			
+	}
 	
 	ArrayPtr ret = xnew<Array>();
 
@@ -880,7 +868,6 @@ bool Class::bind(int_t n){
 
 	if((flags_ & (FLAG_BINDED<<n))==0){
 		flags_ |= (FLAG_BINDED<<n);
-		prebind();
 		if(symbol_data_ && (symbol_data_->flags&(CppClassSymbolData::FLAG_BIND1<<n))){
 			symbol_data_->bind[n](this);
 			return true;
@@ -898,10 +885,22 @@ void Class::set_singleton(){
 	}
 }
 
+void Class::set_cpp_singleton(){
+	if((flags_ & FLAG_SINGLETON)==0){
+		flags_ |= FLAG_SINGLETON;
+		const ClassPtr& cls = get_class();
+		inherit(cls);
+		set_cpp_class(cls->symbol_data_, this);
+		symbol_data_ = cls->symbol_data_;
+		cls->symbol_data_ = 0;
+		Base::set_class(to_smartptr(this));
+	}
+}
+
 void Class::init_singleton(const VMachinePtr& vm){
 	init_instance(to_smartptr(this), vm);
 	
-	if(const AnyPtr& ret = member(Xid(initialize), undefined)){
+	if(const AnyPtr& ret = member(XTAL_DEFINED_ID(initialize), undefined)){
 		vm->setup_call(0);
 		vm->set_arg_this(to_smartptr(this));
 		ret->rawcall(vm);

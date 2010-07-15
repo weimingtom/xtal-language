@@ -46,11 +46,11 @@ public:
 public:
 	
 	int_t to_i(){
-		return ivalue(*this);
+		return XTAL_detail_ivalue(*this);
 	}
 
 	float_t to_f(){
-		return (float_t)ivalue(*this);
+		return (float_t)XTAL_detail_ivalue(*this);
 	}
 
 	StringPtr to_s(){
@@ -87,11 +87,11 @@ public:
 public:
 
 	int_t to_i(){
-		return (int_t)fvalue(*this);
+		return (int_t)XTAL_detail_fvalue(*this);
 	}
 
 	float_t to_f(){
-		return fvalue(*this);
+		return XTAL_detail_fvalue(*this);
 	}
 
 	StringPtr to_s(){
@@ -285,13 +285,13 @@ public:
 	* \xbind
 	* \brief ‹æŠÔ‚Ì¶‚Ì—v‘f‚ğ•Ô‚·
 	*/
-	int_t left(){ return ivalue(left_); }
+	int_t left(){ return XTAL_detail_ivalue(left_); }
 
 	/**
 	* \xbind
 	* \brief ‹æŠÔ‚Ì¶‚Ì—v‘f‚ğ•Ô‚·
 	*/
-	int_t right(){ return ivalue(right_); }
+	int_t right(){ return XTAL_detail_ivalue(right_); }
 
 	AnyPtr each();
 };
@@ -325,13 +325,13 @@ public:
 	* \xbind
 	* \brief ‹æŠÔ‚Ì¶‚Ì—v‘f‚ğ•Ô‚·
 	*/
-	float_t left(){ return fvalue(left_); }
+	float_t left(){ return XTAL_detail_fvalue(left_); }
 
 	/**
 	* \xbind
 	* \brief ‹æŠÔ‚Ì¶‚Ì—v‘f‚ğ•Ô‚·
 	*/
-	float_t right(){ return fvalue(right_); }
+	float_t right(){ return XTAL_detail_fvalue(right_); }
 
 	AnyPtr each();
 };
@@ -399,8 +399,6 @@ public:
 
 	void set_object_parent(const ClassPtr& parent);
 
-	void visit_members(Visitor& m);
-
 private:
 	BasePtr<Class> parent_;
 
@@ -424,7 +422,7 @@ public:
 
 	void on_visit_members(Visitor& m){
 		Base::on_visit_members(m);
-		have_parent_.visit_members(m);
+		m & have_parent_.object_parent();
 	}
 
 protected:
@@ -447,7 +445,7 @@ public:
 	}
 
 	void on_visit_members(Visitor& m){
-		have_parent_.visit_members(m);
+		m & have_parent_.object_parent();
 	}
 
 protected:

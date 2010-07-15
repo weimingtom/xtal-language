@@ -18,7 +18,16 @@
 - \subpage usebytecode
 */
 
+/** \page usemain
+Luaなどのスクリプト言語は、C/C++とのやり取りが煩雑であるものが多い。\n
+そのため言語実装者以外にスクリプト言語とC++との間を取り持つ、「バインダ」と呼ばれるものがよく作られる。\n
+\n
+Xtalでは最初からスクリプト言語と密接したバインダを内蔵しているため、\n
+わざわざバインダを探すことも、またオリジナルのバインダを作る必要も無く、すぐに組み込むことができる。\n
+*/
+
 /** \page useinitialize Xtalの初期化
+ここでは例としてWindowsでの初期化方法を示す。\n
 例として、Windowsでの初期化方法を説明します。\n
 \code
 #include <xtal.h>
@@ -54,8 +63,10 @@ int main(int argc, char** argv){
     // エラーメッセージをバインド
     bind_error_message();
 
-    // ここでスクリプトの実行を行う
-
+	{
+	    // ここでスクリプトの実行を行う
+	}
+	
     // Xtalを破棄
     uninitialize();
 
@@ -63,53 +74,67 @@ int main(int argc, char** argv){
 }
 \endcode
 
-Xtalは環境依存である機能は、簡単に取替えができるようになっています。\n
+Xtalでは環境依存の機能は簡単に取り替えることができるようになっている。\n
+WindowsとLinuxについては、最初から機能が用意されているため、それを使うことができる。\n
+各実装はxtal_libディレクトリ内にクラスで提供されている。\n
+使いたい機能をincludeし、initializeからuninitializeまで生存する変数として定義し、\n
+Settingの各メンバにそのポインタを代入し、initailize関数に渡すこと。\n
+\n
+bind_error_messageでエラーメッセージのバインドができる。\n
+これにより、XRE1001といったエラーメッセージが、意味のあるテキストとして得られるようになる。\n
+リリース時など、エラーメッセージが必要ないのであればこれを呼び出さないことで若干のメモリ節約になる。\n
+\n
+uninitialize時に参照カウントを掴んだままのオブジェクトがあるとassertで停止するため、\n
+スクリプトの実行の部分はブロックで囲むか、別関数で行い、ローカル変数で定義したAnyPtrなどが確実にデストラクタされているようにしよう。\n
 */
 
+
+
 /** \page usehelloworld ファイルに書かれているXtalを実行
-次のようなHello, Worldを出力するスクリプト、HelloWorld.xtalがあるとします。\n
+次のようなHello, Worldを出力するスクリプト、HelloWorld.xtalがあるとする\n
 \code
 // HelloWorld.xtal
 println("Hello, World");
 \endcode
-これをC++から呼び出すにはload関数を使います。\n
+これをC++から呼び出すにはload関数を使う。\n
 \code
 // C++
-load("HelloWorld.xtal");
+load(XTAL_STRING("HelloWorld.xtal"));
+
+// xtal_macro.hをincludeしている場合、次のように記述してもよい
+// load(Xs("HelloWorld.xtal"))
 
 // コンパイルエラーや実行時エラーがあったら捕捉する。
 XTAL_CATCH_EXCEPT(e){
     stderr_stream()->println(e); // stderrに例外オブジェクトを出力する
 }
-
 \endcode
-load関数は呼ばれるたびにHelloWorldをコンパイルして実行します。\n   
 */
 
 /** \page useexcept Xtalで発生した例外を捕捉する
-XTAL_CATCH_EXCEPT(e)を使います。\n
+XTAL_CATCH_EXCEPT(e)マクロを使うことで、Xtal処理系で発生した例外を補足することができる。\n
 \code
 any->call();
 
 XTAL_CATCH_EXCEPT(e){
     // call内で例外がセットされたらここを通る
     // eに例外オブジェクトがセットされる。
+	stderr_stream()->println(e); // stderrに例外オブジェクトを出力する
 }
 else{
     // 例外が発生していないならここを通る
 }
 \endcode
-
 */
 
 /** \page usestring 文字列のXtalソースを実行
-ファイルとしてではなく、文字列としてソースを保持していてそれを実行したい場合は、compile関数を使い、結果を呼び出します。 \n
+ファイルとしてではなく、文字列としてソースを保持していてそれを実行したい場合は、compile関数を使い、結果を呼び出す。 \n
 \code
 const char* source = " println(\"Hello, World\"); ";
 
 // コンパイルエラーがあれば、codeはnullが返る
 if(CodePtr code = compile(source)){
-    code->call();
+    code->call(); // コンパイルしたコードを実行する
 }
 
 XTAL_CATCH_EXCEPT(e){
@@ -119,25 +144,28 @@ XTAL_CATCH_EXCEPT(e){
 */
 
 /** \page useanyptr AnyPtr
-AnyPtrはあらゆるXtalのオブジェクトを保持できる、スマートポインタ型です。 \n   
-AnyPtrは、正確にはSmartPtr<Any>型のtypedefです。 \n
+AnyPtrはあらゆるXtalのオブジェクトを保持できる、スマートポインタ型である。 \n   
+AnyPtrは、正確にはSmartPtr<Any>型のtypedefとなっている。 \n
 
 \section int2anyptr 整数や浮動小数点数型とAnyPtrを相互変換する 
-AnyPtrは全ての整数や浮動小数点数を受け取るコンストラクタが定義されているので、C++の整数からAnyPtrへの変換は自動的に行われます。\n
+AnyPtrは全ての整数や浮動小数点数を受け取るコンストラクタが定義されているので、C++の整数からAnyPtrへの変換は自動的に行われる。\n
 \code
 AnyPtr any = 100;
 AnyPtr value = 10.0f;
 \endcode
-逆にAnyPtr型に入れたものを整数に変換したい場合、Any::to_iメンバ関数やAny::to_fメンバ関数を使います。\n
+逆にAnyPtr型に入れたものを整数に変換したい場合、Any::to_iメンバ関数やAny::to_fメンバ関数を使う。\n
 \code
 int i = any->to_i();
 float f = value->to_f();
 \endcode
+これは、オブジェクトによっては、Xtalレベルでto_iメソッドが呼ばれるため、例外が発生するかもしれないことに注意する。\n
 
 \section str2anyptr 文字列とAnyPtrを相互変換する 
-AnyPtrはconst char*を受け取るコンストラクタが定義されているため、文字列リテラル等からAnyPtrへの変換は自動的に行われます。\n
+AnyPtrはconst char_t*を受け取るコンストラクタが定義されているため、文字列リテラルからAnyPtrへの変換は自動的に行われる。\n
+ただし、UNICODEなどの可搬性を高めるために、XTAL_STRINGマクロで囲む方が望ましい。\n
 \code
 AnyPtr str = "string";
+AnyPtr str2 = XTAL_STRING("string");
 \endcode
 逆にAnyPtrからC++の文字列に直すには、Any::to_sメンバ関数を使います。\n
 to_sはStringPtrを返してくるので、StringPtrで受け取ります。\n
@@ -145,122 +173,47 @@ StringPtrはSmartPtr<String>のtypedefです。\n
 \code
 StringPtr s = str->to_s();
 \endcode
-そして、String::c_str関数で、const char*として受け取れます。\n
+そして、String::c_str関数で、const char_t*として受け取れます。\n
 \code
 const char* ccp = s->c_str();
 \endcode
 
 \section anyptr2any AnyPtr型を他の型に変換する
-例えば、Stringを保持しているAnyPtrをStringPtr型に変換する場合、AnyPtr::to_s()を使いますが、その他にもptr_cast関数を使うことでString型に変換できます。\n
-ptr_cast関数は次のような関数です。    \n
+Stringを保持しているAnyPtrをStringPtr型に変換する場合、to_sメソッドを使うということを説明したが、
+その他にもptr_cast関数を使うことでString型に変換することができる。\n
+ptr_cast関数は次のような関数である。    \n
 
 \code
 template<class T>
-SmartPtr<T> ptr_cast(const AnyPtr& from);
+const SmartPtr<T>& ptr_cast(const AnyPtr& from);
 \endcode
-dynamic_cast等のC++のキャストと同じ形式で呼び出せます。    \n
+dynamic_cast等のC++のキャストと同じ形式で呼び出すようにデザインされている。\n
 \code
-AnyPtr astr = "string";
+AnyPtr astr = XTAL_STRING("string");
 StringPtr str = ptr_cast<String>(astr);
 \endcode
-もしキャストに失敗したら、nullを返します。\n  
+もしキャストに失敗したら、nullを返す。\n  
 \n
-絶対にこれはStringPtrだ、と確定している場合、unchecked_ptr_castが使えます。\n
-ptr_castは継承関係を調べるため若干時間がかかりますが、unchecked_ptr_castは高速です。\n
+絶対にこれはStringPtrだ、と確定している場合、unchecked_ptr_castが使える。\n
+ptr_castは継承関係を調べるため若干時間がかかるが、unchecked_ptr_castは高速に動作する。\n
 \code
-AnyPtr astr = "string";
+AnyPtr astr = XTAL_STRING("string");
 StringPtr str = unchecked_ptr_cast<String>(astr);
 \endcode
 */
 
-/** \page usefun C++の関数をXtalから呼べるように変換する
-C++の関数をXtalの関数から呼べる形式に変換するには、fun関数を使います。\n 
-fun関数を簡単に言うと、C++の関数ポインタを渡せば、Xtalで扱えるオブジェクトを作って返す、という関数です。\n
-\n
-fun関数は次のような形式です。 \n
-\code
-NativeFunPtr fun(R (*pointer_to_function)());
-NativeFunPtr fun(R (*pointer_to_function)(A0));
-NativeFunPtr fun(R (*pointer_to_function)(A0, A1));
-NativeFunPtr fun(R (*pointer_to_function)(A0, A1, A2));
-NativeFunPtr fun(R (*pointer_to_function)(A0, A1, A2, A3));
-NativeFunPtr fun(R (*pointer_to_function)(A0, A1, A2, A3, A4));
-\endcode
-RやA0は、関数の戻り値、引数が自動判定されて決まります。\n
-\code
-void foo(int a, int b){
-    printf("%d\n", a+b);
-}
-
-void bar(){
-    printf("%s\n", "bar");
-}
-
-void test(){
-    NativeFunPtr f = fun(&foo);
-    NativeFunPtr b = fun(&bar);
-}
-\endcode
-
-名前付き引数とそのデフォルト値を指定したい場合、paramメンバ関数を使います。    
-\code
-void foo(int key1, int key2){
-    printf("%d\n", key1+key2);
-}
-
-void test(){
-    // 一つ目の引数をkey1と名づけ、デフォルト値を50に
-    // 二つ目の引数をkey2と名づけ、デフォルト値を100にする
-    NativeFunPtr f = fun(&foo)->param(1, Xid(key1), 50)->param(2, Xid(key2), 100);
-}
-\endcode
-*/
-
-/** \page usefuncall 関数の呼び出し
-AnyPtrに格納されているのがC++の関数かXtalの関数かに関わらず、Any::callを使います。\n
-\code
-void add(int a, int b){
-    printf("%d\n", a+b);
-}
-void test(){
-    AnyPtr add = fun(&add);
-    AnyPtr ret = add->call(100, 200);
-}
-\endcode
-とAnyPtr型の変数に()を付けて引数を渡すというとても直感的な関数の呼び出しができます。\n
-名前つき引数の呼び出しも下のように手軽に記述できます。\n
-\code
-void add(int key1, int key2){
-     printf("%d\n", key1+key2);
-}
-void test(){
-    AnyPtr add = fun(&add)->param(1, Xid(key1), 10)->param(2, Xid(key2), 20);
-    AnyPtr ret = add->call(Named(Xid(key2), 50)); // => 60
-}
-\endcode
-*/
-
-/** \page usesend メソッド呼び出し
-AnyPtrに格納されているのがC++のオブジェクトかXtalのオブジェクトかに関わらず、Any::sendを使います。\n
-\code
-int len = obj->send(Xid(length))->to_i();
-AnyPtr ret = obj->send(Xid(slice), 0, 2);
-printf("%s\n", ret->to_s()->c_str());
-\endcode
-*/
-
-/** \page usenew C++のオブジェクトをnewする
-xnew<T>テンプレート関数を使うと、C++のオブジェクトを、Xtalでも扱えるオブジェクトとして作成できます。\n  
+/** \page usenew C++のオブジェクトをXtalが管理できるオブジェクトとして作成する
+xnew<T>テンプレート関数を使うと、C++のオブジェクトをXtalでも扱えるオブジェクトとして作成できる。\n  
 xnew<T>関数は、SmartPtr<T>型を返します。\n
 \n
-例えば、組み込みの配列のArrayクラスはC++で記述されていますが、これをC++で生成するには次のように書きます。\n
+例えば、組み込みの配列のArrayクラスはC++で記述されているが、これをC++で生成するには次のように書く。\n
 \code
 // ArrayPtr は SmartPtr<Array> のtypedef
 ArrayPtr ary = xnew<Array>(10); //長さ10の配列を生成
 ary->push_back(10);
 \endcode
  
-ユーザーが定義したクラスもxnewで生成出来ます。\n
+ユーザーが定義したクラスもxnewで生成できる。\n
 \code
 class Foo{
 pubic:
@@ -269,42 +222,76 @@ pubic:
 SmartPtr<Foo> foo = xnew<Foo>();
 foo->bar();
 \endcode
-これらのオブジェクトは、すべてのスマートポインタが参照しなくなれば、自動的にガーベージコレクションで削除されるので、明示的なdeleteは必要ありません\n
+これらのオブジェクトは、すべてのスマートポインタが参照しなくなれば、\n
+自動的にガーベージコレクションで削除されるので、明示的なdeleteは必要無い。\n
 */
 
-/** \page userefmember メンバの取得
-Xtalでは、クラス、libオブジェクトなどのメンバを取得するのに、「Int::foo」と書きますが、それをC++で書く方法です。\n
+/** \page usefuncall 関数の呼び出し
+AnyPtrに格納されているのがC++の関数かXtalの関数かに関わらず、Any::callを使う。\n
+\code
+// fooに格納されている関数を引数(100, 200)で呼び出す
+AnyPtr ret = foo->call(100, 200);
+\endcode
+名前つき引数の呼び出しも下のように手軽に記述できる。\n
+\code
+// fooに格納されている関数を引数(10, hoge:50)で呼び出す
+AnyPtr ret = foo->call(10, Xnamed(hoge, 50));
+\endcode
+*/
+
+/** \page usesend メソッド呼び出し
+AnyPtrに格納されているのがC++のオブジェクトかXtalのオブジェクトかに関わらず、Any::sendを使う。\n
+\code
+int len = obj->send(Xid(length))->to_i();
+AnyPtr ret = obj->send(Xid(slice), 0, 2);
+printf("%s\n", ret->to_s()->c_str());
+\endcode
+Xidというのは、Xtalのintern済み文字列を簡単に生成するためのマクロである。\n
 \n
+セカンダリキー付で呼び出すにはAny::send2を使う。\n
+*/
+
+/** \page useiter イテレータの巡回
+配列や連想配列、またはイテレータを巡回する場合、Xforマクロを使う。\n
+\code
+Xfor(val, array){
+    val.p;
+}
+
+Xfor2(key, val, map){
+    key.p;
+    val.p;
+}
+\endcode
+このXforの中では普通にbreakなどで抜け出すことができる。\n
+また、first_stepという、ループの一番最初かどうかをしめすローカル変数も定義されていて使うことができる。\n
+\n
+セカンダリキー付で呼び出すにはAny::send2を使う。\n
+*/
+
+
+/** \page userefmember メンバの取得
 これにはAny::memberメンバ関数を使います。\n
-取得したいメンバの名前を第一引数として渡します。\n    
-もし取得したいメンバが無い場合、nullが返ります。\n  
+取得したいメンバの名前を第一引数として渡す。\n    
+もし取得したいメンバが無い場合、undefinedが返る。\n
+メンバの取得に関してはC++レベルでは例外はセットされない。\n  
 \code 
+// クラスのfooメンバを取り出す
 AnyPtr foo = cls->member(Xid(foo));
+
+// クラスのbarメンバを取り出す
 AnyPtr bar = lib()->member(Xid(bar)):
 \endcode
 */
 
-/** \page usedefmember メンバの定義
-C++からクラスやモジュール、libオブジェクトのメンバを追加定義する方法です。「Int::foo : 100;」相当です。
-
-これにはAny::defメンバ関数を使います。    
-第一引数に定義名、第二引数に定義する値を入れます。   
-
-\code
-cls->def("foo", 100);
-lib()->def("bar", fun(&add));
-\endcode
-*/
-
-
 /** \page useat 配列、連想配列の要素取得、設定
-Any::atを使って、要素の取得を行います。\n
+Array::at, Map::atを使って、要素の取得を行う。\n
 \code
 ret = ary->at(0);
 ret = map->at("key");
 \endcode
  
-値の設定は、Any::set_atを使います。\n
+値の設定は、Array::set_at, Map::set_atを行う。\n
 \code
 any->set_at(0, 10);
 map->set_at("test", 5);
@@ -312,7 +299,7 @@ map->set_at("test", 5);
 */
 
 /** \page usereturn Xtalからオブジェクトを受け取る
-Xtalから値をC++に返すにはトップレベルでreturn文を使います。\n
+Xtalから値をC++に返すにはトップレベルでreturn文を使う。\n
 \code
 // test.xtal
 return 100 + 20;
@@ -332,63 +319,33 @@ else{
     printf("%d\n", value);
 }
 \endcode
-*/
 
-/** \page useimport Xtalへオブジェクトを渡す
-ライブラリを管理するlibオブジェクトのメンバとして定義してあげる方法があります。\n
-\code
-// C++
-void cpp_fun(){
-    puts("cpp_fun");
-}
-
-void test(){
-    // libオブジェクトに登録
-    lib()->def(Xid(cpp_value), fun(&cpp_fun));
-    load("test.xtal");
-}
-\endcode
-
+もしreturn文が無い場合、toplevelオブジェクトが自動的に返される。\n
 \code
 // test.xtal
-lib::cpp_value(); // => cpp_fun
-\endcode
-メンバは基本的に再定義不可能なので、呼び出しのたびに設定するオブジェクトを変えたいなどといった場合に、この方法では対応できません。\n
-\n
-他に実行時に引数として渡す方法があります。\n
+hoo: 100;
 
+class Vec{
+	public _x; 
+	public _y;
+}
+
+\endcode
+ 
 \code
 // C++
-void test(){
-    // コンパイルして、それをcallで実行する。
-    if(CodePtr code = compile("test.xtal")){
-        code->call(100, 200);
-    }
+// test.xtalファイルを実行し、returnされたオブジェクトを得る
+AnyPtr ret = load("test.xtal");
+
+// 例外が発生していないかチェック
+XTAL_CATCH_EXCEPT(e){
+    stderr_stream()->println(e);
 }
-\endcode
-
-\code
-// test.xtal
-args: ...; // トップレベルの...はスクリプト実行する際に渡された引数が入っている。
-args[0].p; //=> 100
-args[1].p; //=> 200
-\endcode
-
-Code::filelocalでそのコードのfilelocalを取り出して、変数を定義することもできます。\n
-\code
-// C++
-void test(){
-    // コンパイルして、それをcallで実行する。
-    if(CodePtr code = compile("test.xtal")){
-        code->def(Xid(foo), 100);
-        code->call();
-    }
+else{
+	// toplevelのhooを取得する
+	int value = ret->member(Xid(hoo))->to_i();
+    printf("%d\n", value);
 }
-\endcode
-
-\code
-// test.xtal
-foo.p; //=> 100
 \endcode
 */
 
@@ -414,13 +371,14 @@ public:
     }
 };
 
-// XTAL_PREBINDの中で継承関係の登録、コンストラクタの登録を行う
+// XTAL_PREBINDの中で継承関係の登録、コンストラクタの登録、所属する名前空間を指定する
 XTAL_PREBIND(Vector2D){
-    // itはClassPtrである。
-    // it->でClassクラスのメンバ関数が呼べる
+	Xregister(Lib); // libにVector2Dという名前で登録する
     
     // コンストラクタの登録
-    it->def_ctor2<Vector2D, float, float>()->param(1, Xid(x), 0)->param(2, Xid(y), 0);
+	Xdef_ctor2(float, float);
+		Xparam(x, 0); // オプショナル引数x
+		Xparam(y, 0); // オプショナル引数y
 }
 
 // XTAL_BINDの中でメンバ関数の登録を行う
@@ -428,15 +386,10 @@ XTAL_BIND(Vector2D){
     // itはClassPtrである。
     // it->でClassクラスのメンバ関数が呼べる
 
-    it->def_var(Xid(x), &Vector2D::x); // メンバ変数xのセッタ、ゲッタを登録
-    it->def_var(Xid(y), &Vector2D::y); // メンバ変数yのセッタ、ゲッタを登録
-    it->def_method(Xid(length), &Vector2D::length); // メンバ関数lengthを登録
-    it->def_method(Xid(normalize), &Vector2D::normalize); // メンバ関数lengthを登録
-}
-
-void test(){
-    // libオブジェクトに登録
-    lib()->def(Xid(Vector2D), cpp_class<Vector2D>());
+    Xdef_var(x); // メンバ変数xのセッタ、ゲッタを登録
+    Xdef_var(y); // メンバ変数yのセッタ、ゲッタを登録
+    Xdef_method(length); // メンバ関数lengthを登録
+    Xdef_method(normalize); // メンバ関数lengthを登録
 }
 \endcode
 
@@ -465,25 +418,27 @@ public:
 };
 
 XTAL_PREBIND(Foo){
-    it->def_ctor1<Foo>()->param(1, Xid(value), 0);
+	Xregister(Lib); // libにFooという名前で登録する
+
+    Xdef_ctor1(int);
+		Xparam(value, 0);
 }
 
 XTAL_BIND(Foo){
-    it->def_method(Xid(add), &Foo::add);
+    Xdef_method(add);
 }
 
 XTAL_PREBIND(SubFoo){
-    // inheritで継承関係を結ぶ
-    // cpp_class<Foo>()でFooクラスのクラスオブジェクトを取得できる
-    it->inherit(cpp_class<Foo>());
-    it->def_ctor0<SubFoo>();
+ 	Xregister(SubFoo); // libにFooという名前で登録する
+	
+   // Xinheritで継承関係を結ぶ
+    Xinherit(Foo);
+	
+	// コンストラクタを定義する
+    Xdef_ctor0();
 }
 
 void test(){
-    // libオブジェクトに登録する
-    lib()->def(Xid(Foo), cpp_class<Foo>());
-    lib()->def(Xid(SubFoo), cpp_class<SubFoo>());
-
     // 実行して結果を受け取る
     AnyPtr ret = load("test.xtal");
     
@@ -525,45 +480,3 @@ if(CodePtr code = ptr_cast<Code>(fs->deserialize())){
 \endcode
 */
 
-/** \page
-関数が沢山ある場合は、それらをClassとして纏め、それを渡すとスマートです。    
-Classクラスも最基底ではAnyPtrを継承しています。そのため、AnyPtrに自動変換可能です。    
-    
-Classクラスは関数の登録に便利なdef_funメンバ関数を持っています。    
-Class::def_funは any->def("foo", fun(&foo)) のショートカットです。    
-
-include <xtal.h>
-using namespace xtal;
-
-int add(int a, int b){ return a+b; }
-int sub(int a, int b){ return a-b; }
-int mul(int a, int b){ return a*b; }
-int div(int a, int b){ return a/b; }
-
-void test(){
-    // Xtalの初期化
-    initialize(); 
-    
-    try{
-
-        ClassPtr ops = xnew<Class>("ops"); // opsクラスを作る
-        ops->def_fun("add", &add); // addという名前のメンバとしてadd関数を登録
-        // ops->def("add", fun(&add)); // これと上は同じ
-    
-        ops->def_fun("sub", &sub);
-        ops->def_fun("mul", &mul);
-        
-        // paramsで名前付き引数を付けられる
-        ops->fun("div", &div)->params("a", 0, "b", 1); 
-    
-        // libオブジェクトに登録する
-        lib()->def("ops", ops);
-    
-        // test.xtalをロードし、実行する
-        load("test.xtal");
-        
-    }catch(AnyPtr e){
-         fprintf(stderr, "%s\n", e->to_s()->c_str());
-    }
-}
-*/

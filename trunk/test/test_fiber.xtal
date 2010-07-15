@@ -43,7 +43,7 @@ class TestFiber{
 			yield;
 		}
 		
-		assert fib() catch(e) true;
+		assert fib().p catch(e) true;
 	}
 		
 	simple#Test{

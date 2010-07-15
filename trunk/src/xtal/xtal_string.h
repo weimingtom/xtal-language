@@ -384,8 +384,8 @@ public:
 	}
 };
 
-inline bool operator ==(const IDPtr& a, const IDPtr& b){ return raweq(a, b); }
-inline bool operator !=(const IDPtr& a, const IDPtr& b){ return rawne(a, b); }
+inline bool operator ==(const IDPtr& a, const IDPtr& b){ return XTAL_detail_raweq(a, b); }
+inline bool operator !=(const IDPtr& a, const IDPtr& b){ return !XTAL_detail_raweq(a, b); }
 
 int_t edit_distance(const StringPtr& str1, const StringPtr& str2);
 

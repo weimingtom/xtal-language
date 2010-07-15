@@ -70,12 +70,12 @@ void MembersIter2::block_next(const VMachinePtr& vm){
 
 Frame::Frame(const FramePtr& outer, const CodePtr& code, ScopeInfo* info)
 	:outer_(outer), code_(code), scope_info_(info ? info : &empty_class_info), 
-	members_(scope_info_->variable_size), buckets_(0), buckets_size_(0), buckets_capa_(0), flags_(FLAG_ORPHAN){
+	members_(scope_info_->variable_size), buckets_(0), buckets_capa_(0), flags_(FLAG_ORPHAN){
 }
 
 Frame::Frame()
 	:scope_info_(&empty_class_info), 
-	members_(0),  buckets_(0), buckets_size_(0), buckets_capa_(0), flags_(FLAG_ORPHAN){}
+	members_(0),  buckets_(0), buckets_capa_(0), flags_(FLAG_ORPHAN){}
 
 Frame::~Frame(){
 	if(!orphan()){
@@ -100,6 +100,11 @@ Frame::~Frame(){
 
 void Frame::expand_buckets(){
 	uint_t newcapa = buckets_capa_==0 ? 5 : buckets_capa_*2 + 1;
+
+	while(members_.size() >= newcapa){
+		newcapa =  newcapa*2 + 1;
+	}
+
 	Node** newbuckets = (Node**)xmalloc(sizeof(Node*)*newcapa);
 	for(uint_t i=0; i<newcapa; ++i){
 		newbuckets[i] = 0;
@@ -138,12 +143,12 @@ Frame::Node* Frame::find_node(const IDPtr& primary_key, const AnyPtr& secondary_
 	Node* node = buckets_[hn];
 	while(node!=0){
 		if(node->flags&FLAG_NODE3){
-			if(raweq(primary_key, ((Node3*)node)->primary_key) && raweq(secondary_key, ((Node3*)node)->secondary_key)){
+			if(XTAL_detail_raweq(primary_key, ((Node3*)node)->primary_key) && XTAL_detail_raweq(secondary_key, ((Node3*)node)->secondary_key)){
 				return node;
 			}
 		}
 		else{
-			if(raweq(primary_key, ((Node2*)node)->primary_key) && is_undefined(secondary_key)){
+			if(XTAL_detail_raweq(primary_key, ((Node2*)node)->primary_key) && XTAL_detail_is_undefined(secondary_key)){
 				return node;
 			}
 		}
@@ -152,18 +157,17 @@ Frame::Node* Frame::find_node(const IDPtr& primary_key, const AnyPtr& secondary_
 	return 0;
 }
 
-Frame::Node* Frame::insert_node(const IDPtr& primary_key, const AnyPtr& secondary_key){		
+Frame::Node* Frame::insert_node(const IDPtr& primary_key, const AnyPtr& secondary_key, uint_t n){		
 	if(Node* node = find_node(primary_key, secondary_key)){
 		return node;
 	}
 
-	if(buckets_size_ >= buckets_capa_){
+	if(members_.size() >= buckets_capa_){
 		expand_buckets();
 	}
-	buckets_size_++;
 
 	Node* node;
-	if(is_undefined(secondary_key)){
+	if(XTAL_detail_is_undefined(secondary_key)){
 		Node2* n2 = new_object_xmalloc<Node2>();
 		n2->primary_key = primary_key;
 		node = n2;
@@ -177,7 +181,7 @@ Frame::Node* Frame::insert_node(const IDPtr& primary_key, const AnyPtr& secondar
 		node->flags = FLAG_NODE3;
 	}
 
-	node->num = 0;
+	node->num = (u16)n;
 
 	uint_t hn = hashcode(primary_key, secondary_key) % buckets_capa_;
 	node->next = buckets_[hn];
@@ -195,14 +199,52 @@ void Frame::make_members(){
 void Frame::make_members_force(int_t flags){
 	if(code_ && scope_info_){
 		for(int_t i=0; i<scope_info_->variable_size; ++i){
-			Node* node = insert_node(code_->identifier(scope_info_->variable_identifier_offset+i), undefined);
-			node->num = i;
+			Node* node = insert_node(code_->identifier(scope_info_->variable_identifier_offset+i), undefined, i);
 			node->flags |= flags;
 		}
 		set_initialized_members();
 	}
 }
 
+const CodePtr& Frame::code(){ 
+	return code_; 
+}
+
+void Frame::set_code(const CodePtr& code){
+	code_ = code;
+}
+
+void Frame::on_visit_members(Visitor& m){
+	HaveParentBase::on_visit_members(m);
+
+	if(flags_ & FLAG_ORPHAN){
+		m & members_;
+	}
+
+	m & outer_ & code_;
+
+	for(uint_t i=0; i<buckets_capa_; ++i){
+		Node* node = buckets_[i];
+		while(node!=0){
+			if(node->flags&FLAG_NODE3){
+				m & ((Node3*)node)->secondary_key;
+			}
+			node = node->next;
+		}	
+	}
+}
+
+void Frame::attach(ScopeInfo* info, Code* code, AnyPtr* values, uint_t size){
+	scope_info_ = info;
+	code_ = code;
+	members_.attach(values, size);
+}
+
+void Frame::detach(){
+	members_.detach();
+	outer_ = null;
+	code_ = null;
+}
 
 AnyPtr Frame::members(){
 	if(!orphan()){
@@ -237,10 +279,6 @@ bool Frame::replace_member(const IDPtr& primary_key, const AnyPtr& value){
 	}
 
 	return false;
-}
-
-void Frame::push_back_member(const AnyPtr& value){
-	members_.push_back(value);
 }
 
 }

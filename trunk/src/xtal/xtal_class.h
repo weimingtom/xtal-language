@@ -11,6 +11,8 @@ namespace xtal{
 
 struct param_types_holder_n;
 
+// インスタンス変数を保持するための型
+// メモリ節約のため、特殊な実装になっている
 class InstanceVariables{
 public:
 
@@ -28,8 +30,8 @@ public:
 			int_t install_count = *(int_t*)buf; buf += sizeof(int_t);
 			AnyPtr* values = (AnyPtr*)buf;
 			for(int_t i=0; i<install_count; ++i){
-				if(class_info==rawvalue(values[i]).immediate_second_vpvalue()){
-					int_t pos = rawvalue(values[i]).immediate_first_value();
+				if(class_info==XTAL_detail_rawvalue(values[i]).immediate_second_vpvalue()){
+					int_t pos = XTAL_detail_rawvalue(values[i]).immediate_first_value();
 					return values[install_count+pos+index];
 				}
 			}
@@ -49,8 +51,8 @@ public:
 			int_t install_count = *(int_t*)buf; buf += sizeof(int_t);
 			AnyPtr* values = (AnyPtr*)buf;
 			for(int_t i=0; i<install_count; ++i){
-				if(class_info==rawvalue(values[i]).immediate_second_vpvalue()){
-					int_t pos = rawvalue(values[i]).immediate_first_value();
+				if(class_info==XTAL_detail_rawvalue(values[i]).immediate_second_vpvalue()){
+					int_t pos = XTAL_detail_rawvalue(values[i]).immediate_first_value();
 					values[install_count+pos+index] = value;
 					return;
 				}
@@ -58,10 +60,12 @@ public:
 		}
 	}
 
-	void visit_members(Visitor& m);
+	friend void visit_members(Visitor& m, InstanceVariables* self);
 
 public:
 	ClassInfo* info_;
+
+	// インスタンス変数の総計。info_の先は消える可能性があるので、destroyで正確なインスタンス変数の数を得るために。
 	int_t sum_;
 };
 
@@ -414,7 +418,7 @@ public:
 		return (ClassInfo*)Frame::info();
 	}
 
-	void unset_native(){
+	void set_xtal_class(){
 		flags_ &= ~FLAG_NATIVE;
 	}
 	
@@ -448,6 +452,8 @@ public:
 	}
 
 	void set_singleton();
+
+	void set_cpp_singleton();
 
 	void init_singleton(const VMachinePtr& vm);
 
@@ -487,7 +493,7 @@ protected:
 		NativeFunPtr ctor;
 	};
 
-	struct Options2 : Options{
+	struct Options2 : public Options{
 		NativeFunPtr serial_ctor;
 		IDPtr name;
 	};

@@ -21,7 +21,7 @@
 	if(bool not_end = true)\
 	for(::xtal::BlockValueHolder1 block_value_holder(target, not_end); not_end; not_end=false)\
 	for(const ::xtal::AnyPtr& var = block_value_holder.values[0]; not_end; not_end=false)\
-	for(bool first_step=not_end=::xtal::block_next(block_value_holder, true); not_end; not_end=::xtal::block_next(block_value_holder, false), first_step=false)
+	for(bool first_step=not_end=::xtal::block_next(block_value_holder, true); XTAL_UNUSED_VAR(first_step), not_end; not_end=::xtal::block_next(block_value_holder, false), first_step=false)
 
 /**
 * \hideinitializer
@@ -37,7 +37,7 @@
 	if(bool not_end = true)\
 	for(::xtal::BlockValueHolder2 block_value_holder(target, not_end); not_end; not_end=false)\
 	for(const ::xtal::AnyPtr& var1 = block_value_holder.values[0], &var2 = block_value_holder.values[1]; not_end; not_end=false)\
-	for(bool first_step=not_end=::xtal::block_next(block_value_holder, true); not_end; not_end=::xtal::block_next(block_value_holder, false), first_step=false)
+	for(bool first_step=not_end=::xtal::block_next(block_value_holder, true); XTAL_UNUSED_VAR(first_step), not_end; not_end=::xtal::block_next(block_value_holder, false), first_step=false)
 
 /**
 * \hideinitializer
@@ -53,7 +53,7 @@
 	if(bool not_end = true)\
 	for(::xtal::BlockValueHolder3 block_value_holder(target, not_end); not_end; not_end=false)\
 	for(const ::xtal::AnyPtr& var1 = block_value_holder.values[0], &var2 = block_value_holder.values[1], &var3 = block_value_holder.values[2]; not_end; not_end=false)\
-	for(bool first_step=not_end=::xtal::block_next(block_value_holder, true); not_end; not_end=::xtal::block_next(block_value_holder, false), first_step=false)
+	for(bool first_step=not_end=::xtal::block_next(block_value_holder, true); XTAL_UNUSED_VAR(first_step), not_end; not_end=::xtal::block_next(block_value_holder, false), first_step=false)
 
 
 /**
@@ -73,7 +73,7 @@
 #define Xfor_cast(var, target) \
 	if(bool not_end = true)\
 	for(::xtal::BlockValueHolder1 block_value_holder(target, not_end); not_end; not_end=false)\
-	for(bool first_step=not_end=::xtal::block_next(block_value_holder, true); not_end; not_end=::xtal::block_next(block_value_holder, false), first_step=false)\
+	for(bool first_step=not_end=::xtal::block_next(block_value_holder, true); XTAL_UNUSED_VAR(first_step), not_end; not_end=::xtal::block_next(block_value_holder, false), first_step=false)\
 	if(var = ::xtal::tricky_cast(block_value_holder.values[0], (void (*)(var##e))0))
 
 /**
@@ -151,6 +151,9 @@
 * \endcode
 */
 #define Xs(x) XTAL_STRING(x)
+
+
+#define Xnamed(name, value) ::xtal::Named(Xid(name), value)
 
 
 #endif // XTAL_MACRO_H_INCLUDE_GUARD

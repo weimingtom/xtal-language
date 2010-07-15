@@ -169,11 +169,12 @@ private:
 
 			// â¬éãÇ©Ç«Ç§Ç©
 			bool visible;
+			bool visible2;
 
 			// éQè∆Ç≥ÇÍÇƒÇ¢ÇÈÇ©Ç«Ç§Ç©
 			bool refered;
 
-			// public, protected, private
+			// public, prentriesotected, private
 			int_t accessibility;
 		};
 
@@ -236,6 +237,7 @@ private:
 
 	VariableInfo var_find(const IDPtr& key, bool force = false);
 	void var_visible(const IDPtr& key, bool visible);
+	void var_refere(const IDPtr& key);
 	void var_begin(int_t kind);
 	void var_define_stmts(const ExprPtr& stmts, bool visible);
 	void var_define_stmt(const AnyPtr& stmt, bool visible);
@@ -246,13 +248,18 @@ private:
 
 	void scope_begin();
 	void scope_end();
+	void scope_skip();
 	void scope_chain(int_t var_frame_size);
+
+	void scope_optimize_begin();
+	void scope_optimize_end();
 
 	PODStack<Scope*> scope_stack_;
 	Scope* root_;
 	Scope& current_scope(){ return *scope_stack_.top(); }
 
 	void build_scope(const AnyPtr& a);
+	void build_scope2(const AnyPtr& a);
 	void calc_scope(Scope* scope, Scope* fun_scope, int_t base);
 	void optimize_scope(Scope* scope);
 	void delete_scope(Scope* scope);

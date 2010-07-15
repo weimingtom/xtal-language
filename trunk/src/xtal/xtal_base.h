@@ -9,48 +9,6 @@
 
 namespace xtal{
 
-void* xmalloc(size_t);
-void xfree(void*, size_t);
-void* xmalloc_align(size_t, size_t);
-void xfree_align(void*, size_t, size_t);
-
-enum{
-	ALIGN_MIN = 8
-};
-
-template<int Size, int Align>
-struct ObjectXMalloc{
-	static void* xm(){ return xmalloc_align(Size, Align); }
-	static void xf(void* p){ xfree_align(p, Size, Align); }
-};
-
-template<int Size>
-struct ObjectXMalloc<Size, 0>{
-	static void* xm(){ return xmalloc(Size); }
-	static void xf(void* p){ xfree(p, Size); }
-};
-
-template<class T>
-inline T* object_xmalloc(){
-	return (T*)ObjectXMalloc<sizeof(T), ((int)AlignOf<T>::value<=(int)ALIGN_MIN) ? 0 : AlignOf<T>::value>::xm();
-}
-
-template<class T>
-inline T* new_object_xmalloc(){
-	return new(object_xmalloc<T>()) T();
-}
-
-template<class T>
-inline void object_xfree(T* p){
-	ObjectXMalloc<sizeof(T), ((int)AlignOf<T>::value<=(int)ALIGN_MIN) ? 0 : AlignOf<T>::value>::xf(p);
-}
-
-template<class T>
-inline void delete_object_xfree(T* p){
-	p->~T();
-	object_xfree(p);
-}
-
 template<int N, class T>
 struct RCBaseClassType{
 	enum{ value = 0 };
@@ -69,7 +27,7 @@ struct VirtualMembers{
 	u16 is_container;
 
 	void (*object_free)(RefCountingBase*);
-	void (*destroy)(RefCountingBase*);
+	void (*object_destroy)(RefCountingBase*);
 	void (*visit_members)(RefCountingBase* p, Visitor& m);
 	
 	void (*rawcall)(RefCountingBase* p, const VMachinePtr& vm);
@@ -97,7 +55,7 @@ struct VirtualMembersM{
 	static T* cast(RefCountingBase* p){ return static_cast<T*>(p); }
 	
 	static void object_free(RefCountingBase* p){ object_xfree<T>(cast(p)); }
-	static void destroy(RefCountingBase* p){ cast(p)->~T(); }
+	static void object_destroy(RefCountingBase* p){ cast(p)->~T(); }
 	static void visit_members(RefCountingBase* p, Visitor& m){ cast(p)->on_visit_members(m); }
 	
 	static void rawcall(RefCountingBase* p, const VMachinePtr& vm){ cast(p)->on_rawcall(vm); }
@@ -188,7 +146,7 @@ const VirtualMembers VirtualMembersT<T>::value = {
 	(u16)checker::visit_members_overwrite,
 
 	&VirtualMembersM<T>::object_free,
-	&VirtualMembersM<T>::destroy,
+	&VirtualMembersM<T>::object_destroy,
 	&visit_members::visit_members,
 	
 	&rawcall::rawcall,
@@ -249,15 +207,15 @@ public:
 public:
 
 	void finalize(){
-		if(!destroyed()){
-			value_.inc_ref_count(); 
+		if(!object_destroyed()){
+			inc_ref_count(); 
 			virtual_members()->finalize(this);
-			value_.dec_ref_count(); 
+			dec_ref_count(); 
 		}
 	}
 
 	void visit_members(Visitor& m){
-		if(!destroyed()){
+		if(!object_destroyed()){
 			virtual_members()->visit_members(this, m);
 		}
 	}
@@ -270,53 +228,54 @@ public:
 
 	void on_rawcall(const VMachinePtr& vm);
 	
-	void on_def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){}
+	void on_def(const IDPtr& /*primary_key*/, const AnyPtr& /*value*/, const AnyPtr& /*secondary_key*/, int_t /*accessibility*/){}
 	
-	const AnyPtr& on_rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){ return *(AnyPtr*)&undefined; }
+	const AnyPtr& on_rawmember(const IDPtr& /*primary_key*/, const AnyPtr& /*secondary_key*/, bool /*inherited_too*/, int_t& /*accessibility*/, bool& /*nocache*/){ return *(AnyPtr*)&undefined; }
 	
 	const ClassPtr& on_object_parent(){ return *(ClassPtr*)&null; }
 	
-	void on_set_object_parent(const ClassPtr& parent){}
+	void on_set_object_parent(const ClassPtr& /*parent*/){}
 	
 	void on_finalize(){}
 	
-	void on_visit_members(Visitor& m){}
+	void on_visit_members(Visitor&){}
 
 	void on_shrink_to_fit(){}
 
 public:
-	RefCountingBase(){}
+	RefCountingBase(){ ref_count_ = 0; }
 
-	uint_t have_finalizer(){ return value_.have_finalizer(); }
+public:
+	enum{
+		DESTROYED_FLAG_SHIFT = USER_FLAG_SHIFT,
+		DESTROYED_FLAG_BIT = 1<<DESTROYED_FLAG_SHIFT,
 
-	void set_finalizer_flag(){ value_.set_finalizer_flag(); }
+		HAVE_FINALIZER_FLAG_SHIFT = DESTROYED_FLAG_SHIFT+1,
+		HAVE_FINALIZER_FLAG_BIT = 1<<HAVE_FINALIZER_FLAG_SHIFT,
 
-	void unset_finalizer_flag(){ value_.unset_finalizer_flag(); }
+		//REF_COUNT_SHIFT = HAVE_FINALIZER_FLAG_SHIFT+1,
+		//REF_COUNT_MASK = ~((1<<REF_COUNT_SHIFT)-1),
+		//REF_COUNT_NUMBER = 1<<REF_COUNT_SHIFT,
+	};
 
-	uint_t ref_count(){ return value_.ref_count(); }
+	int_t ref_count(){ return ref_count_; }
+	int_t alive_ref_count() const{ return ref_count_; }
+	void add_ref_count(int_t n){ ref_count_ += n; }
+	void inc_ref_count(){ ++ref_count_; }
+	void dec_ref_count(){ if(!--ref_count_){ object_destroy(); } }
 
-	void inc_ref_count(){ value_.inc_ref_count(); }
+	void atomic_inc_ref_count(){ ++ref_count_; }
+	int_t atomic_dec_ref_count(){ return --ref_count_; }
 
-	void dec_ref_count(){
-		value_.dec_ref_count();
-		if(!value_.can_not_destroy()){
-			destroy();
-		}
-	}
+	uint_t have_finalizer() const{ return (XTAL_detail_user_flags(*this) & HAVE_FINALIZER_FLAG_BIT); }
+	void set_finalizer_flag(){ XTAL_detail_user_flags(*this) |= HAVE_FINALIZER_FLAG_BIT; }
+	void unset_finalizer_flag(){ XTAL_detail_user_flags(*this) &= ~HAVE_FINALIZER_FLAG_BIT; }
 
-	void add_ref_count(int_t rc){ value_.add_ref_count(rc); }
+	uint_t object_destroyed() const{ return (XTAL_detail_user_flags(*this) & DESTROYED_FLAG_BIT); }
+	void set_object_destroyed_flag(){ XTAL_detail_user_flags(*this) |= DESTROYED_FLAG_BIT; }
 
-	uint_t can_not_destroy(){ return value_.can_not_destroy(); }
-
-	uint_t destroyed(){ return value_.destroyed(); }
-
-	void set_destroyed_flag(){ value_.set_destroyed_flag(); }
-
-	void destroy();
-
-	void object_free(){ 
-		virtual_members()->object_free(this); 
-	}
+	void object_destroy();
+	void object_free(){ virtual_members()->object_free(this); }
 
 public:
 
@@ -328,10 +287,11 @@ public:
 
 protected:
 	const VirtualMembers* vmembers_;
+	uint_t ref_count_;
 	
 private:
 
-#ifdef XTAL_DEBUG
+#ifdef XTAL_DEBUG // VCなど、仮想関数を持つクラスはデバッグがしやすくなることがあるので
 	virtual void virtual_function(){}
 #endif
 

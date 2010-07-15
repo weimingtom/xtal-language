@@ -37,13 +37,9 @@ public:
 		outer_ = outer;
 	}
 
-	const CodePtr& code(){ 
-		return code_; 
-	}
+	const CodePtr& code();
 
-	void set_code(const CodePtr& code){
-		code_ = code;
-	}
+	void set_code(const CodePtr& code);
 
 	ScopeInfo* info(){
 		return scope_info_;
@@ -94,8 +90,6 @@ protected:
 	void make_members();
 	void make_members_force(int_t flags);
 
-	void push_back_member(const AnyPtr& value);
-
 protected:
 
 	enum{
@@ -118,25 +112,25 @@ protected:
 		}
 	};
 
-	struct Node2 : Node{
+	struct Node2 : public Node{
 		IDPtr primary_key;
 	};
 
-	struct Node3 : Node2{
+	struct Node3 : public Node2{
 		AnyPtr secondary_key;
 	};
 
 protected:
 
 	static uint_t hashcode(const IDPtr& primary_key, const AnyPtr& secondary_key){
-		return (rawvalue(primary_key).u()>>3) ^ rawvalue(secondary_key).u();
+		return (XTAL_detail_uvalue(primary_key)>>3) ^ XTAL_detail_uvalue(secondary_key);
 	}
 
 	void expand_buckets();
 
 	Node* find_node(const IDPtr& primary_key, const AnyPtr& secondary_key);
 
-	Node* insert_node(const IDPtr& primary_key, const AnyPtr& secondary_key);
+	Node* insert_node(const IDPtr& primary_key, const AnyPtr& secondary_key, uint_t num);
 
 protected:
 	enum{
@@ -180,25 +174,12 @@ public:
 	
 	const AnyPtr& on_rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
 
-	void on_visit_members(Visitor& m){
-		HaveParentBase::on_visit_members(m);
+	void on_visit_members(Visitor& m);
 
-		if(flags_ & FLAG_ORPHAN){
-			m & members_;
-		}
+	void attach(ScopeInfo* info, Code* code, AnyPtr* values, uint_t size);
 
-		m & outer_ & code_;
+	void detach();
 
-		for(uint_t i=0; i<buckets_capa_; ++i){
-			Node* node = buckets_[i];
-			while(node!=0){
-				if(node->flags&FLAG_NODE3){
-					m & ((Node3*)node)->secondary_key;
-				}
-				node = node->next;
-			}	
-		}
-	}
 protected:
 	BasePtr<Frame> outer_;
 	BasePtr<Code> code_;
@@ -207,7 +188,6 @@ protected:
 	xarray members_;
 
 	Node** buckets_;
-	uint_t buckets_size_;
 	uint_t buckets_capa_;
 
 	u16 object_force_;

@@ -399,6 +399,10 @@ public:
 
 	void set_object_parent(const ClassPtr& parent);
 
+	void orphan(){
+		parent_ = null;
+	}
+
 private:
 	BasePtr<Class> parent_;
 
@@ -425,8 +429,11 @@ public:
 		m & have_parent_.object_parent();
 	}
 
-protected:
+	void object_orphan(){
+		have_parent_.orphan();
+	}
 
+protected:
 	HaveParent have_parent_;
 };
 
@@ -448,8 +455,11 @@ public:
 		m & have_parent_.object_parent();
 	}
 
-protected:
+	void object_orphan(){
+		have_parent_.orphan();
+	}
 
+protected:
 	HaveParent have_parent_;
 };
 

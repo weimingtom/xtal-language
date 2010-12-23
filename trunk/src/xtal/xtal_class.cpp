@@ -2,6 +2,7 @@
 #include "xtal_macro.h"
 
 #include "xtal_details.h"
+#include "xtal_debug.h"
 
 namespace xtal{
 
@@ -151,6 +152,7 @@ void Class::init(){
 	inherited_classes_ = empty_inherited_classes;
 	object_force_ = 0;
 	symbol_data_ = 0;
+	overwrite_now_ = false;
 	set_initialized_members();
 }
 
@@ -176,6 +178,24 @@ Class::~Class(){
 }
 
 void Class::overwrite(const ClassPtr& p){
+	overwrite_inner(p);
+
+	for(uint_t i=0; i<alive_object_count(); ++i){
+		AnyPtr obj = alive_object(i);
+		if(XTAL_detail_type(obj)==TYPE_BASE){
+			if(const ClassPtr& cp = ptr_cast<Class>(obj)){
+				cp->overwrite_now_ = false;
+			}
+		}
+	}
+}
+
+void Class::overwrite_inner(const ClassPtr& p){
+	if(overwrite_now_){
+		return;
+	}
+	overwrite_now_ = true;
+
 	if(!is_native() && !p->is_native()){
 		
 		for(int_t i=0; p->inherited_classes_[i]; ++i){
@@ -456,7 +476,7 @@ void Class::overwrite_member(const IDPtr& primary_key, const AnyPtr& value, cons
 		if(const ClassPtr& dest = ptr_cast<Class>(member_direct(it->num))){
 			if(const ClassPtr& src = ptr_cast<Class>(value)){
 				if(!dest->is_native() && !src->is_native()){
-					dest->overwrite(src);
+					dest->overwrite_inner(src);
 					invalidate_cache_member();
 					return;
 				}
@@ -475,8 +495,18 @@ void Class::overwrite_member(const IDPtr& primary_key, const AnyPtr& value, cons
 void Class::on_def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
 	flags_ &= ~(FLAG_LAST_DEFINED_CTOR | FLAG_LAST_DEFINED_CTOR2);
 
+	bool a = debug::is_redefine_enabled();
 	if(find_node(primary_key, secondary_key)){
-		XTAL_SET_EXCEPT(cpp_class<RedefinedError>()->call(Xt2("XRE1011", object, this->object_name(), name, primary_key)));
+		if(debug::is_redefine_enabled()){
+			Node* node = insert_node(primary_key, secondary_key, members_.size());
+			node->flags |= accessibility;
+			Frame::set_member_direct(node->num, value);
+			value->set_object_parent(to_smartptr(this));
+			invalidate_cache_member();
+		}
+		else{
+			XTAL_SET_EXCEPT(cpp_class<RedefinedError>()->call(Xt2("XRE1011", object, this->object_name(), name, primary_key)));
+		}
 	}
 	else{
 		Node* node = insert_node(primary_key, secondary_key, members_.size());

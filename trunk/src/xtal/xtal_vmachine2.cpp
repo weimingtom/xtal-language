@@ -599,7 +599,7 @@ AnyPtr VMachine::append_backtrace(const inst_t* pc, const AnyPtr& e){
 
 		if(MethodPtr fun = XTAL_VM_ff().fun){
 			if(CodePtr code = fun->code()){
-				if((pc !=  code->data() + code->size()-1)){
+				if((pc !=  code->bytecode_data() + code->bytecode_size()-1)){
 					unchecked_ptr_cast<Exception>(ep)->append_backtrace(
 						code->source_file_name(),
 						code->compliant_lineno(pc),
@@ -869,14 +869,14 @@ const inst_t* VMachine::catch_body(const inst_t* pc, const ExceptFrame& nef){
 	if(ef.info){
 		CodePtr code = XTAL_VM_ff().fun->code();
 		if(ef.info->catch_pc && e){
-			pc = ef.info->catch_pc +  code->data();
+			pc = ef.info->catch_pc +  code->bytecode_data();
 			stack_.push(AnyPtr(ef.info->end_pc));
 			stack_.push(e);
 		}
 		else{
-			pc = ef.info->finally_pc +  code->data();
+			pc = ef.info->finally_pc +  code->bytecode_data();
 			stack_.push(e);
-			stack_.push(AnyPtr(code->size()-1));
+			stack_.push(AnyPtr(code->bytecode_size()-1));
 		}
 
 		except_frames_.downsize(1);

@@ -200,7 +200,7 @@ void enable_debug_compile();
 
 /**
 * \xbind lib::builtin::debug
-* \brief デバッグコンパイルを有効にする
+* \brief デバッグコンパイルを無効にする
 */
 void disable_debug_compile();
 
@@ -277,6 +277,23 @@ const AnyPtr& throw_hook();
 */
 const AnyPtr& assert_hook();
 
+/**
+* \xbind lib::builtin::debug
+* \brief 再定義が有効かどうか
+*/
+bool is_redefine_enabled();
+
+/**
+* \xbind lib::builtin::debug
+* \brief 再定義を有効にする
+*/
+void enable_redefine();
+
+/**
+* \xbind lib::builtin::debug
+* \brief 再定義を無効にする
+*/
+void disable_redefine();
 
 //////////////////////////////
 

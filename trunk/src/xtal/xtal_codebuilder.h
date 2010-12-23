@@ -239,8 +239,8 @@ private:
 	void var_visible(const IDPtr& key, bool visible);
 	void var_refere(const IDPtr& key);
 	void var_begin(int_t kind);
-	void var_define_stmts(const ExprPtr& stmts, bool visible);
-	void var_define_stmt(const AnyPtr& stmt, bool visible);
+	//void var_define_stmts(const ExprPtr& stmts, bool visible);
+	//void var_define_stmt(const AnyPtr& stmt, bool visible);
 	void var_define(const IDPtr& name, bool visible);
 	void var_assign(const IDPtr& name);
 	void var_define_class_member(const IDPtr& name, int_t accessibility, bool visible);

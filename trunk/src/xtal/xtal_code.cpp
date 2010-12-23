@@ -20,6 +20,8 @@ void Class_inherit(const ClassPtr& cls, const ClassPtr cls2){
 }
 
 Code::Code(){
+	enable_redefine_ = false;
+
 	set_singleton();
 	set_object_temporary_name(XTAL_DEFINED_ID(filelocal));
 	set_object_force(500);
@@ -102,7 +104,7 @@ const inst_t* Code::compliant_pc(int_t lineno){
 		}
 	}
 
-	return neari<0 ? 0 : data() + lineno_table_[neari].start_pc;
+	return neari<0 ? 0 : bytecode_data() + lineno_table_[neari].start_pc;
 }
 
 Code::LineNumberInfo* Code::compliant_lineno_info(const inst_t* p){
@@ -113,7 +115,7 @@ Code::LineNumberInfo* Code::compliant_lineno_info(const inst_t* p){
 			std::upper_bound(
 				begin,
 				end,
-				static_cast<int_t>(p-data()),
+				static_cast<int_t>(p-bytecode_data()),
 				LineNumberCmp()
 			);
 
@@ -130,6 +132,10 @@ Code::LineNumberInfo* Code::compliant_lineno_info(const inst_t* p){
 }
 
 void Code::on_rawcall(const VMachinePtr& vm){
+	if(enable_redefine_){
+		debug::enable_redefine();
+	}
+
 	if(vm->has_arguments()){
 		overwrite_member(XTAL_DEFINED_ID(arg), vm->make_arguments());
 		vm->setup_call();
@@ -138,8 +144,20 @@ void Code::on_rawcall(const VMachinePtr& vm){
 		vm->return_result(vm->result_and_cleanup_call());
 	}
 	else{
-		vm->set_arg_this(to_smartptr(this));
-		first_fun_->rawcall(vm);
+		if(enable_redefine_){
+			vm->setup_call();
+			vm->set_arg_this(to_smartptr(this));
+			first_fun_->rawcall(vm);
+			vm->return_result(vm->result_and_cleanup_call());
+		}
+		else{
+			vm->set_arg_this(to_smartptr(this));
+			first_fun_->rawcall(vm);
+		}
+	}
+
+	if(enable_redefine_){
+		debug::disable_redefine();
 	}
 }
 
@@ -214,7 +232,7 @@ StringPtr Code::inspect(){
 	}
 	
 	ms->put_s(XTAL_STRING("\n"));
-	ms->put_s(inspect_range(0, size()));
+	ms->put_s(inspect_range(0, bytecode_size()));
 
 	ms->seek(0);
 	return ms->get_s(ms->size());
@@ -227,7 +245,7 @@ StringPtr Code::inspect(){
 }
 
 StringPtr Code::inspect_range(int_t start, int_t end){
-	return xtal::inspect_range(to_smartptr(this), data()+start, data()+end);
+	return xtal::inspect_range(to_smartptr(this), bytecode_data()+start, bytecode_data()+end);
 }
 
 }

@@ -6,7 +6,7 @@ namespace xtal{
 #ifdef XTAL_DEBUG
 
 int_t inst_inspect(inst_address_t& value, Inst* inst, const CodePtr& code){
-	int_t pc = (inst_t*)inst - code->data();
+	int_t pc = (inst_t*)inst - code->bytecode_data();
 	return pc + value;
 }
 

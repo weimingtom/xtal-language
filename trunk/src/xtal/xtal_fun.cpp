@@ -150,7 +150,7 @@ Method::Method(const FramePtr& outer, const CodePtr& code, FunInfo* info)
 }
 
 const inst_t* Method::source(){ 
-	return code_->data()+info_->pc; 
+	return code_->bytecode_data()+info_->pc; 
 }
 
 const IDPtr& Method::param_name_at(size_t i){ 

@@ -241,9 +241,9 @@ inst_address_t CodeBuilder::calc_address(const inst_t* pc, inst_address_t addres
 }
 
 void CodeBuilder::opt_jump(){
-	const inst_t* begin = result_->data();
+	const inst_t* begin = result_->bytecode_data();
 	inst_t* pc = (inst_t*)begin;
-	const inst_t* end = result_->data() + result_->size(); 
+	const inst_t* end = result_->bytecode_data() + result_->bytecode_size(); 
 
 	while(pc<end){
 		switch(*pc){
@@ -1111,6 +1111,7 @@ void CodeBuilder::var_assign(const IDPtr& name){
 	var_refere(name);
 }
 
+/*
 void CodeBuilder::var_define_stmts(const ExprPtr& stmts, bool visible){
 	XTAL_FOR_EXPR(v, stmts){
 		var_define_stmt(v, visible);
@@ -1141,6 +1142,7 @@ void CodeBuilder::var_define_stmt(const AnyPtr& stmt, bool visible){
 		}
 	}
 }
+*/
 
 void CodeBuilder::var_define(const IDPtr& name, bool visible){
 	for(size_t j = 0, jlast = current_scope().entries.size(); j<jlast; ++j){

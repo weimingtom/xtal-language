@@ -1710,17 +1710,17 @@ zerodiv3:
 	}*/ }
 
 	XTAL_VM_CASE(InstTryEnd){ // 2
-		XTAL_VM_CONTINUE(except_frames_.pop().info->finally_pc + XTAL_VM_ff().code->data()); 
+		XTAL_VM_CONTINUE(except_frames_.pop().info->finally_pc + XTAL_VM_ff().code->bytecode_data()); 
 	}
 
 	XTAL_VM_CASE(InstPushGoto){ // 3
-		stack_.push(Int((int_t)((pc+inst.address)-XTAL_VM_ff().code->data()))); 
+		stack_.push(Int((int_t)((pc+inst.address)-XTAL_VM_ff().code->bytecode_data()))); 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
 	XTAL_VM_CASE(InstPopGoto){ // 2
 		Any ret = stack_.top(); stack_.pop();
-		XTAL_VM_CONTINUE(XTAL_VM_ff().code->data()+XTAL_detail_ivalue(ret));
+		XTAL_VM_CONTINUE(XTAL_VM_ff().code->bytecode_data()+XTAL_detail_ivalue(ret));
 	}
 
 	XTAL_VM_CASE(InstThrow) XTAL_VM_LOCK{ // 12

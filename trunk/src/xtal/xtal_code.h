@@ -35,12 +35,25 @@ public:
 
 	int_t final_lineno();
 
-	const inst_t* data(){
+	/**
+	* \brief バイトコードのデータを返す
+	*/
+	const inst_t* bytecode_data(){
 		return code_.data();
 	}
 
-	int_t size(){
+	/**
+	* \brief バイトコードのサイズを返す
+	*/
+	int_t bytecode_size(){
 		return (int_t)code_.size();
+	}
+
+	/**
+	* \brief このコードをcallしたときだけは再定義してもエラーにならないようにする
+	*/
+	void enable_redefine(){
+		enable_redefine_ = true;
 	}
 
 	/**
@@ -159,6 +172,8 @@ private:
 	
 	StringPtr source_file_name_;
 	MethodPtr first_fun_;
+
+	bool enable_redefine_;
 
 private:
 

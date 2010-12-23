@@ -691,6 +691,8 @@ void benchmark(const char* file, const AnyPtr& arg){
 	}
 }
 
+class Hoo;
+
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 
@@ -700,23 +702,27 @@ int main2(int argc, char** argv){
 	//Debugger debugger;
 	//debugger.attach(xnew<DebugStream>("127.0.0.1", "13245"));
 
+	full_gc();
+
+	{
+		CodePtr code = xnew<Code>();
+		code->def("aaa", cpp_class<Hoo>());
+		cpp_class<Hoo>()->object_orphan();
+	}
+
+	full_gc();
+
 	{
 		if(CodePtr code = Xsrc((
 /////////////////////////////////
-			return 10*15;
+			a: 0;
+			b: 0;
+			c: 0;
+			return true;
 /////////////////////////////////
 		))){
-			//code->inspect()->p();
-			//AnyPtr ret = code->call(xnew<Spr>());
-			
-			MemoryStreamPtr ms = xnew<MemoryStream>();
-			ms->serialize(code);
-			ms->seek(0);
-			compile(ms)->call()->p();
-			
 
-			//code->call(4);
-			//full_gc();
+			
 		}
 	}
 
@@ -1526,221 +1532,3 @@ int main(int argc, char** argv){
 	return ret;
 }
 
-
-/*
-class Freq{
-public:
-
-	Freq(){
-		sum_ = 0;
-
-		for(u32 i=0; i<TABLE_SIZE; ++i){
-			count_[i] = 0;
-			count_sum_[i] = 0;
-		}
-
-		for(u32 i=0; i<TABLE_SIZE; ++i){
-			put_value(i, 1);
-		}
-	}
-
-	void put_value(i32 c, i32 n){
-		i32 node = c + TABLE_SIZE - 1;
-		count_[c] += n;
-		sum_ += n;
-		while(node>0){
-			int_t parent = (node - 1) / 2;
-			if(node & 1){
-				count_sum_[parent] += n;
-			}
-			node = parent;
-		}
-	}
-
-	u32 cumul(i32 c){
-		i32 n = 0;
-		i32 node = c + TABLE_SIZE - 1;
-		while(node > 0){
-			i32 parent = (node - 1) / 2;
-			if(node & 1){
-				count_sum_[parent]++;
-			}
-			else{
-				n += count_sum_[parent];
-			}
-			node = parent;
-		}
-		return n;
-	}
-
-	void update(i32 c){
-		count_[c]++;
-		sum_++;
-		if(sum_ >= MIN_RANGE){
-			for(i32 i=0; i<TABLE_SIZE; ++i){
-				i32 n = count_[i] >> 1;
-				if(n>0){
-					put_value(i, -n);
-				}
-			}
-		}
-	}
-
-	u32 sum(){
-		return sum_;
-	}
-
-	i32 count_sum(i32 c){
-		return count_sum_[c];
-	}
-
-	i32 count(i32 c){
-		return count_[c];
-	}
-
-	void search_code(u32 value, u32& retnode, u32& retn){
-		u32 n = 0;
-		u32 node = 0;
-		u32 node_size = TABLE_SIZE - 1;
-		while(node < node_size){
-			if(value < n + count_sum_[node]){
-				count_sum_[node]++;
-				node = node * 2 + 1;
-			}
-			else{
-				n += count_sum_[node];
-				node = node * 2 + 2;
-			}
-		}
-
-		retnode = node - node_size;
-		retn = n;
-	}
-	
-	static const int MAX_RANGE = 0xffffffff;
-	static const int MIN_RANGE = 0x100000;
-	static const int TABLE_SIZE = 256;
-
-private:
-
-	i32 count_[TABLE_SIZE];
-	i32 count_sum_[TABLE_SIZE];
-	u32 sum_;
-};
-
-class RangeEncoder{
-public:
-	RangeEncoder(const StreamPtr& out){
-		out_ = out;
-		range_ = Freq::MAX_RANGE;
-		buff_ = 0;
-		count_ = 0;
-		low_ = 0;
-	}
-
-	void encode(i32 c){
-		u32 temp = range_ / freq_.sum();
-		normalize(freq_.cumul(c), freq_.count(c), temp);
-		freq_.update(c);
-	}
-
-	void finish(){
-		out_->put_u8(buff_);
-		for(i32 i=0; i<count_; ++i){
-			out_->put_u8(0xff);
-		}	
-		out_->put_u32be(low_);
-	}
-
-	void normalize(u32 cumul, u32 count, u32 div){
-		u32 newlow = low_ + cumul * div;
-		range_ = count * div;
-
-		// overflow
-		if(newlow < low_){
-			buff_++;
-			if(count_>0){
-				out_->put_u8(buff_);
-				for(i32 i=0; i<count_-1; ++i){
-					out_->put_u8(0);
-				}
-				buff_ = 0;
-				count_ = 0;
-			}
-		}
-
-		low_ = newlow;
-		while(range_ < Freq::MIN_RANGE){
-			if(low_ < (0xff<<24)){
-				out_->put_u8(buff_);
-				for(i32 i=0; i<count_; ++i){
-					out_->put_u8(0xff);
-				}				
-				buff_ = (low_ >> 24) & 0xff;
-				count_ = 0;
-			}
-			else{
-				count_++;
-			}
-
-			low_  <<= 8;
-			range_ <<= 8;
-		}
-	}
-
-private:
-	StreamPtr out_;
-
-	Freq freq_;
-
-	u32 low_;
-	u32 range_;
-	u32 buff_;
-	u32 count_;
-};
-
-class RangeDecoder{
-public:
-
-	RangeDecoder(const StreamPtr& in){
-		in_ = in;
-		range_ = Freq::MAX_RANGE;
-		buff_ = 0;
-		count_ = 0;
-
-		in_->get_u8();
-		low_ = in_->get_u32be();
-	}
-
-	void normalize(){
-		while(range_ < Freq::MIN_RANGE){
-			range_ <<= 8;
-			low_ <<= 8;
-			low_ += in_->get_u8();
-		}
-	}
-
-	u32 decode(){
-		u32 c;
-		u32 num;
-		u32 temp = range_ / freq_.sum();
-		freq_.search_code(low_ / temp, c, num);
-		low_ -= temp * num;
-		range_ = temp * freq_.count(c);
-		normalize();
-		freq_.update(c);
-		return c;
-	}
-
-private:
-	StreamPtr in_;
-
-	Freq freq_;
-
-	u32 low_;
-	u32 range_;
-	u32 buff_;
-	u32 count_;
-};
-
-*/

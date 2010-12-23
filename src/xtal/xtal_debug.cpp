@@ -62,6 +62,7 @@ enum{
 class DebugData : public Base{
 public:
 	DebugData(){
+		redefine_count_ = 0;
 		enable_count_ = 0;
 		hook_setting_bit_ = 0;
 		saved_hook_setting_bit_ = 0;
@@ -69,6 +70,7 @@ public:
 		debug_compile_count_ = 0;
 	}
 
+	uint_t redefine_count_;
 	uint_t enable_count_;
 	uint_t hook_setting_bit_;
 	uint_t saved_hook_setting_bit_;
@@ -152,6 +154,22 @@ void disable_debug_compile(){
 	const SmartPtr<DebugData>& d = cpp_value<DebugData>();
 	d->debug_compile_count_--;
 }
+
+bool is_redefine_enabled(){
+	const SmartPtr<DebugData>& d = cpp_value<DebugData>();
+	return d->redefine_count_>0;
+}
+
+void enable_redefine(){
+	const SmartPtr<DebugData>& d = cpp_value<DebugData>();
+	d->redefine_count_++;
+}
+
+void disable_redefine(){
+	const SmartPtr<DebugData>& d = cpp_value<DebugData>();
+	d->redefine_count_--;
+}
+
 
 uint_t hook_setting_bit(){
 	const SmartPtr<DebugData>& d = cpp_value<DebugData>();

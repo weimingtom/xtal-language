@@ -1453,6 +1453,14 @@ int_t CodeBuilder::compile_e(const ExprPtr& e, int_t stack_top, int_t result, in
 		XTAL_CASE_N(case EXPR_DEFINE:){
 			if(e->bin_lhs()->itag()==EXPR_LVAR){
 				VariableInfo var = var_find(e->bin_lhs()->lvar_name(), true);
+
+				if(e->bin_rhs()->itag()==EXPR_CLASS){
+					e->bin_rhs()->set_class_name(e->bin_lhs()->lvar_name());
+				}
+				else if(e->bin_rhs()->itag()==EXPR_FUN){
+					e->bin_rhs()->set_fun_name(e->bin_lhs()->lvar_name());
+				}
+
 				if(var.is_register()){
 					compile_expr(e->bin_rhs(), stack_top, var.register_number);
 					var_visible(e->bin_lhs()->lvar_name(), true);

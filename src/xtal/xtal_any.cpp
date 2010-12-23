@@ -217,7 +217,7 @@ StringPtr Any::defined_place_name(const CodePtr& code, int_t pc, int_t name_numb
 			return code->identifier(name_number);
 		}
 
-		return Xf2("%s(%d)", 0, code->source_file_name(), 1, code->compliant_lineno(code->data()+pc));
+		return Xf2("%s(%d)", 0, code->source_file_name(), 1, code->compliant_lineno(code->bytecode_data()+pc));
 	}
 	else{
 		return XTAL_STRING("?");

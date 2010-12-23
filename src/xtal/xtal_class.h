@@ -486,6 +486,7 @@ public:
 	}
 
 protected:
+	void overwrite_inner(const ClassPtr& p);
 	
 	const AnyPtr& def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
 
@@ -518,6 +519,8 @@ protected:
 	CppClassSymbolData* symbol_data_;
 
 	Class** inherited_classes_;
+
+	bool overwrite_now_;
 
 	friend class InheritedClassesIter;
 };
